@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  box-sizing: border-box;
+  padding:0;
+}
+
+html{
+  font-size: 62.5%;
+}
+
+.link{
+  text-decoration: none; /* Tắt gạch chân mặc định */
+  transition: color 0.1s, text-decoration 0.1s; /* Hiệu ứng chuyển đổi */
+}
+
+.link:hover {
+  text-decoration: underline; /* Gạch chân khi hover */
+}
+.ant-menu-item-active::after{
+  border:none !important;
+  border-bottom-color:#EC3C3C !important;
+}
+.ant-menu-item-selected::after{
+  border:none !important;
+  border-bottom-color:#EC3C3C !important;
+}
