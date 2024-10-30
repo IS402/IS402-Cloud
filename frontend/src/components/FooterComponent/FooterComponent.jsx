@@ -1,5 +1,6 @@
 import React from "react";
 import { Layout, Row, Col, Typography, Space } from "antd";
+import { Link } from 'react-router-dom';
 import facebookImage from "../../images/facebook_icon_8543190720.svg";
 import zaloImage from "../../images/zalo_icon_8cbef61812.svg";
 import youtubeImage from "../../images/youtube_icon_b492d61ba5.svg";
@@ -24,7 +25,7 @@ import thm from "../../images/thuong_hieu_manh_2013_icon_b56f772475.svg";
 import thongbao from "../../images/da_thong_bao_bo_cong_thuong_icon_64785fb3f7.svg";
 
 const { Footer } = Layout;
-const { Text, Link } = Typography;
+const { Text } = Typography;
 const whiteColor = "#ffffff";
 
 const FooterComponent = () => {
@@ -157,16 +158,16 @@ const FooterComponent = () => {
               marginBottom: 5,
             }}
           >
-            <Link href="/" className="link" style={{color:whiteColor}}>Giới thiệu về công ty</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Quy chế hoạt động</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>F.Friends - Bạn đồng hành</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Tin tức khuyến mại</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Giới thiệu máy đổi trả</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Hướng dẫn mua hàng & thanh toán online</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Đại lý uỷ quyền và TTBH uỷ quyền của Apple</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Tra cứu hoá đơn điện tử</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Tra cứu bảo hành</Link>
-            <Link href="/" className="link" style={{color:whiteColor}}>Câu hỏi thường gặp</Link>
+            <Link to="/support/gioi-thieu" className="link" style={{color:whiteColor}}>Giới thiệu về công ty</Link>
+            <Link to="/support/" className="link" style={{color:whiteColor}}>Quy chế hoạt động</Link>
+            <Link to="/support/ffriends" className="link" style={{color:whiteColor}}>F.Friends - Bạn đồng hành</Link>
+            <Link to="/support/" className="link" style={{color:whiteColor}}>Tin tức khuyến mại</Link>
+            <Link to="/support/gioi-thieu-may-doi-tra" className="link" style={{color:whiteColor}}>Giới thiệu máy đổi trả</Link>
+            <Link to="/support/huong-dan-mua-hang" className="link" style={{color:whiteColor}}>Hướng dẫn mua hàng & thanh toán online</Link>
+            <Link to="/support/nha-nhap-khau-truc-tiep" className="link" style={{color:whiteColor}}>Đại lý uỷ quyền và TTBH uỷ quyền của Apple</Link>
+            <Link to="/support/" className="link" style={{color:whiteColor}}>Tra cứu hoá đơn điện tử</Link>
+            <Link to="/support/" className="link" style={{color:whiteColor}}>Tra cứu bảo hành</Link>
+            <Link to="/support/cau-hoi-thuong-gap" className="link" style={{color:whiteColor}}>Câu hỏi thường gặp</Link>
           </div>
         </Col>
         <Col xs={24} sm={12} md={6}>
@@ -189,15 +190,15 @@ const FooterComponent = () => {
               marginBottom: 5,
             }}
           >
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách bảo hành</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách đổi trả</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách bảo mật</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách trả góp</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách khui hộp sản phẩm</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách giao hàng & lắp đặt</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách mạng di động FPT</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Chính sách thu thập & xử lý dữ liệu cá nhân</Link>
-            <Link href="/" className="link"style={{color:whiteColor}}>Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu</Link>
+            <Link to="/support/chinh-sach-bao-hanh" className="link"style={{color:whiteColor}}>Chính sách bảo hành</Link>
+            <Link to="/support/chinh-sach-doi-san-pham" className="link"style={{color:whiteColor}}>Chính sách đổi trả</Link>
+            <Link to="/support/chinh-sach-bao-mat" className="link"style={{color:whiteColor}}>Chính sách bảo mật</Link>
+            <Link to="/support/chinh-sach-tra-gop" className="link"style={{color:whiteColor}}>Chính sách trả góp</Link>
+            <Link to="/support/chinh-sach-khui-hop-san-pham" className="link"style={{color:whiteColor}}>Chính sách khui hộp sản phẩm</Link>
+            <Link to="/support/chinh-sach-giao-hang" className="link"style={{color:whiteColor}}>Chính sách giao hàng & lắp đặt</Link>
+            <Link to="/support/chinh-sach-gia-cuoc" className="link"style={{color:whiteColor}}>Chính sách mạng di động FPT</Link>
+            <Link to="/support/chinh-sach-thu-thap-&-xu-ly-du-lieu-ca-nhan" className="link"style={{color:whiteColor}}>Chính sách thu thập & xử lý dữ liệu cá nhân</Link>
+            <Link to="/support/quy-dinh-ho-tro-ky-thuat-va-sao-luu-du-lieu" className="link"style={{color:whiteColor}}>Quy định về hỗ trợ kỹ thuật & sao lưu dữ liệu</Link>
           </div>
         </Col>
         <Col xs={24} sm={12} md={6}>

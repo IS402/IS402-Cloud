@@ -24,3 +24,12 @@ html{
   border:none !important;
   border-bottom-color:#EC3C3C !important;
 }
+.ant-menu-item-selected{
+  background-color: #EC3C3C !important;
+}
+.ant-menu-item-selected span{
+  color:white !important;
+}
+.ant-menu-item-selected a{
+  color:white !important;
+}
