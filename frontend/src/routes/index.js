@@ -11,6 +11,11 @@ export const routes=[
         isShowHeader:true
     },
     {
+        path:'/home',
+        page:HomePage,
+        isShowHeader:true
+    },
+    {
         path:'/products',
         page:ProductPage,
         isShowHeader:true

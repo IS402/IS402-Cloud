@@ -16,8 +16,10 @@ import {
   RightOutlined,
   EnvironmentOutlined,
   PhoneOutlined,
+  TruckOutlined,
 } from "@ant-design/icons";
 import logo from "../../images/logo1.png";
+import truckImage from "../../images/delivery-truck.png";
 
 const { Header } = Layout;
 const primaryColor = "#EC3C3C";
@@ -28,8 +30,7 @@ const whiteColor = "#ffffff";
 const items = [
   {
     key: "phones",
-    label:<span  style={{ color: whiteColor, fontSize: 16 }}>
-        Điện thoại</span>,
+    label: <span style={{ color: whiteColor, fontSize: 16 }}>Điện thoại</span>,
   },
   {
     key: "accessories",
@@ -57,6 +58,7 @@ const items = [
 const HeaderComponent = () => {
   const [isLoginHovered, setIsLoginHovered] = useState(false);
   const [isCartHovered, setIsCartHovered] = useState(false);
+  const [isInvoiceHovered, setIsInvoiceHovered] = useState(false);
   const menu = (
     <Menu
       items={[
@@ -87,16 +89,37 @@ const HeaderComponent = () => {
             backgroundColor: primaryColor,
             paddingTop: 10,
             paddingBottom: 10,
-            paddingLeft: 120,
-            paddingRight: 120,
+            paddingLeft: 100,
+            paddingRight: 100,
           }}
         >
           <div
             className="demo-logo"
-            style={{ marginRight: "20px", display: "flex", width: "150px" }}
+            style={{ marginRight: "20px", display: "flex", width: "150px", justifyContent:'center'}}
           >
-            <img src={logo} alt="Logo" style={{ height: "40px" }} />
+            <a href="/home" style={{height:40}}><img src={logo} alt="Logo" style={{ height: "40px" }} /></a>
           </div>
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <Button
+              type="primary"
+              icon={<EnvironmentOutlined />}
+              style={{
+                borderRadius: 20,
+                border: "none",
+                height: 35,
+                boxShadow: "none",
+                backgroundColor: lightColor,
+                textAlign: "left",
+                fontSize: 16,
+                display: "flex",
+                marginLeft: 20,
+                justifyContent: "space-between",
+                width: 180,
+              }}
+            >
+              Hồ Chí Minh <RightOutlined />
+            </Button>
+          </Dropdown>
           <Input
             placeholder="Bạn tìm gì..."
             prefix={<SearchOutlined />}
@@ -107,25 +130,32 @@ const HeaderComponent = () => {
               borderRadius: 20,
               paddingLeft: 10,
               height: 35,
-              marginRight: "20px",
-              marginLeft: 60,
+              marginRight: "10px",
+              marginLeft: 20,
             }}
           />
           <Button
             type="primary"
-            onMouseEnter={() => setIsLoginHovered(true)}
-            onMouseLeave={() => setIsLoginHovered(false)}
-            icon={<UserOutlined />}
+            onMouseEnter={() => setIsInvoiceHovered(true)}
+            onMouseLeave={() => setIsInvoiceHovered(false)}
+            icon={
+              <img
+                src={truckImage}
+                alt="icon"
+                style={{ width: 25, height: 25 }}
+              />
+            }
             style={{
               borderRadius: 20,
               border: "none",
               height: 35,
               boxShadow: "none",
-              backgroundColor: isLoginHovered ? hoverColor : primaryColor,
+              marginLeft: 10,
+              backgroundColor: isInvoiceHovered ? hoverColor : primaryColor,
               fontSize: 16,
             }}
           >
-            Đăng nhập
+            Tra cứu đơn hàng
           </Button>
           <Button
             type="primary"
@@ -144,27 +174,22 @@ const HeaderComponent = () => {
           >
             Giỏ hàng
           </Button>
-          <Dropdown overlay={menu} trigger={["click"]}>
-            <Button
-              type="primary"
-              icon={<EnvironmentOutlined />}
-              style={{
-                borderRadius: 20,
-                border: "none",
-                height: 35,
-                boxShadow: "none",
-                backgroundColor: lightColor,
-                textAlign: "left",
-                fontSize: 16,
-                display: "flex",
-                marginLeft: 10,
-                justifyContent: "space-between",
-                width: 300,
-              }}
-            >
-              Hồ Chí Minh <RightOutlined />
-            </Button>
-          </Dropdown>
+          <Button
+            type="primary"
+            onMouseEnter={() => setIsLoginHovered(true)}
+            onMouseLeave={() => setIsLoginHovered(false)}
+            icon={<UserOutlined />}
+            style={{
+              borderRadius: 20,
+              border: "none",
+              height: 35,
+              boxShadow: "none",
+              backgroundColor: isLoginHovered ? hoverColor : primaryColor,
+              fontSize: 16,
+            }}
+          >
+            Đăng nhập
+          </Button>
         </Row>
         <Row
           style={{
