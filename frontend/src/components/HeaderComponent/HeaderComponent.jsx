@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import {
-  Breadcrumb,
   Layout,
   Menu,
-  theme,
   Input,
   Button,
   Dropdown,
@@ -14,9 +12,7 @@ import {
   UserOutlined,
   ShoppingCartOutlined,
   RightOutlined,
-  EnvironmentOutlined,
-  PhoneOutlined,
-  TruckOutlined,
+  EnvironmentOutlined
 } from "@ant-design/icons";
 import logo from "../../images/logo1.png";
 import truckImage from "../../images/delivery-truck.png";

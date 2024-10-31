@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Row, Col, Typography, Space } from "antd";
+import { Layout, Row, Col, Typography } from "antd";
 import { Link } from 'react-router-dom';
 import facebookImage from "../../images/facebook_icon_8543190720.svg";
 import zaloImage from "../../images/zalo_icon_8cbef61812.svg";

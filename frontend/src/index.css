@@ -33,3 +33,25 @@ html{
 .ant-menu-item-selected a{
   color:white !important;
 }
+/* Chiều rộng của thanh cuộn */
+::-webkit-scrollbar {
+  width: 8px; /* Thanh cuộn dọc */
+  height: 8px; /* Thanh cuộn ngang */
+}
+
+/* Phần nền của thanh cuộn */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+/* Phần di chuyển (thumb) của thanh cuộn */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+/* Màu sắc khi hover vào thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
