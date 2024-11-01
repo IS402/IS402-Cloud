@@ -3,8 +3,21 @@ import ProductPage from "../pages/ProductPage/ProductPage"
 import OrderPage from "../pages/OrderPage/OrderPage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage.jsx"
 import SupportPage from "../pages/SupportPage/SupportPage.jsx"
+import LoginPage from "../pages/LoginPage/LoginPage.jsx"
+import SignUpPage from "../pages/SignUpPage/SignUpPage.jsx"
+import ProductDetailPage from "../pages/ProductDetailPage/ProductDetailPage.jsx"
 
 export const routes=[
+    {
+        path:'/login',
+        page:LoginPage,
+        // isShowHeader:true
+    },
+    {
+        path:'/signup',
+        page:SignUpPage,
+        // isShowHeader:true
+    },
     {
         path:'/',
         page:HomePage,
@@ -16,8 +29,13 @@ export const routes=[
         isShowHeader:true
     },
     {
-        path:'/products',
+        path:'/product',
         page:ProductPage,
+        isShowHeader:true
+    },
+    {
+        path:'/product-detail',
+        page:ProductDetailPage,
         isShowHeader:true
     },
     {

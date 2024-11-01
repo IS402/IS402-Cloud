@@ -55,3 +55,99 @@ html{
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Login.css */
+
+.login-container {
+  width: 800px;
+  margin: 0 auto;
+  /* padding-top: 100px; */
+  justify-content: center;
+  align-items: center;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  width: 300px;
+}
+
+.login-button {
+  width: 100%;
+  background-color: #EC3C3C;
+  color:#ffffff
+}
+
+.login-remember {
+  display: flex;
+  justify-content: flex-start;
+}
+.username{
+  width: 100%;
+}
+.username input{
+  height: 30px;
+}
+.password{
+  width: 100%;
+}
+.password input{
+  height: 30px;
+}
+.confirmPassword{
+  width: 100%;
+}
+.confirmPassword input{
+  height: 30px;
+}
+.email{
+  width: 100%;
+}
+.email input{
+  height: 30px;
+}
+
+/* SignUp.css */
+
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.signup-form {
+  width: 300px;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.signup-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.signup-button {
+  width: 100%;
+  background-color: #EC3C3C;
+  color:#ffffff
+}
+.cursor-button{
+  cursor: pointer;
+}
+.box-select{
+  border:1px solid #EC3C3C !important;
+  border-left: 16px transparent;
+  border-style: solid;
+  border-top-width: 16px;
+  
+}
+.ant-radio-wrapper .ant-radio-checked .ant-radio-inner{
+  border-color:#EC3C3C;
+  background-color: #EC3C3C;
+}

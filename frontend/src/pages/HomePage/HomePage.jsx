@@ -7,10 +7,6 @@ import image4 from "../../images/sliding-home-iphone-16-pro-km-moi.png";
 import image5 from "../../images/Sliding-air-pod-4-series.png";
 import hotSales from "../../images/hot-sale-cuoi-tuan-20-03-2024.gif";
 import ProductBoxComponent from "../../components/ProductBoxComponent/ProductBoxComponent";
-import policy1 from "../../images/policy1.svg"
-import policy2 from "../../images/policy2.svg"
-import policy3 from "../../images/policy3.svg"
-import policy4 from "../../images/policy4.svg"
 import discount1 from "../../images/H3_1_daee070bf4.png"
 import discount2 from "../../images/H3_405x175_a9884857ee.png"
 import discount3 from "../../images/H3_405x175_48b1bd19d9.png"
@@ -24,42 +20,42 @@ const HomePage = () => {
           <img
             src={image1}
             alt="bacgkround"
-            style={{ height: 500, width: "100%", borderRadius: 20 }}
+            style={{ height: 530, width: "100%", borderRadius: 20 }}
           />
         </div>
         <div style={{ borderRadius: 20 }}>
           <img
             src={image2}
             alt="bacgkround"
-            style={{ height: 500, width: "100%", borderRadius: 20 }}
+            style={{ height: 530, width: "100%", borderRadius: 20 }}
           />
         </div>
         <div style={{ borderRadius: 20 }}>
           <img
             src={image3}
             alt="bacgkround"
-            style={{ height: 500, width: "100%", borderRadius: 20 }}
+            style={{ height: 530, width: "100%", borderRadius: 20 }}
           />
         </div>
         <div style={{ borderRadius: 20 }}>
           <img
             src={image4}
             alt="bacgkround"
-            style={{ height: 500, width: "100%", borderRadius: 20 }}
+            style={{ height: 530, width: "100%", borderRadius: 20 }}
           />
         </div>
         <div style={{ borderRadius: 20 }}>
           <img
             src={image5}
             alt="bacgkround"
-            style={{ height: 500, width: "100%", borderRadius: 20 }}
+            style={{ height: 530, width: "100%", borderRadius: 20 }}
           />
         </div>
       </Carousel>
       <Row
         style={{
           backgroundColor: "#f83f5d",
-          marginTop: 30,
+          marginTop: 50,
           marginLeft: 50,
           marginRight: 50,
           paddingBottom: 20,
@@ -168,35 +164,6 @@ const HomePage = () => {
             <img src={discount3} alt="" style={{borderRadius:20, height:165}}/>
           </Col>
         </Row>
-      </Row>
-      <Row style={{
-          marginTop: 50,
-          marginLeft: 50,
-          marginRight: 50,
-          paddingBottom: 20,
-          display:'flex',
-          justifyContent:'center',
-        }}>
-        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center',flex: 1}}>
-          <img src={policy3} alt="" style={{height:80}}/>
-          <Text style={{fontWeight:'bold',textAlign:'center'}}>Thương hiệu đảm bảo</Text>
-          <Text style={{textAlign:'center'}}>Nhập khẩu, bảo hành chính hãng</Text>
-        </Col>
-        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
-          <img src={policy1} alt="" style={{height:80}}/>
-          <Text style={{fontWeight:'bold',textAlign:'center'}}>Đổi trả dễ dàng</Text>
-          <Text style={{textAlign:'center'}}>Theo chính sách đổi trả tại Wumiibo Shop</Text>
-        </Col>
-        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
-          <img src={policy4} alt="" style={{height:80}}/>
-          <Text style={{fontWeight:'bold',textAlign:'center'}}>Sản phẩm chất lượng</Text>
-          <Text style={{textAlign:'center'}}>Đảm bảo tương thích và độ bền cao</Text>
-        </Col>
-        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
-          <img src={policy2} alt="" style={{height:80}}/>
-          <Text style={{fontWeight:'bold',textAlign:'center'}}>Giao hàng tận nơi</Text>
-          <Text style={{textAlign:'center'}}>Tại 63 tỉnh thành</Text>
-        </Col>
       </Row>
     </div>
   );

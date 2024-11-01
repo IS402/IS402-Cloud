@@ -94,7 +94,7 @@ const ProductBoxComponent = () => {
           </Col>
           <Col style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Text style={{ color: "#777", fontSize: 12 }}>Yêu thích</Text>
-            <img src={love} alt="" style={{ height: 25 }} />
+            <img src={love} alt="" style={{ height: 20 }} />
           </Col>
         </div>
         <div

@@ -23,6 +23,10 @@ import dmca from "../../images/dmca_icon_8fc6622bd5.svg";
 import spdv from "../../images/san_pham_dich_vu_hang_dau_viet_nam_icon_282a9ba4f7.svg";
 import thm from "../../images/thuong_hieu_manh_2013_icon_b56f772475.svg";
 import thongbao from "../../images/da_thong_bao_bo_cong_thuong_icon_64785fb3f7.svg";
+import policy1 from "../../images/policy1.svg"
+import policy2 from "../../images/policy2.svg"
+import policy3 from "../../images/policy3.svg"
+import policy4 from "../../images/policy4.svg"
 
 const { Footer } = Layout;
 const { Text } = Typography;
@@ -30,7 +34,38 @@ const whiteColor = "#ffffff";
 
 const FooterComponent = () => {
   return (
-    <Footer
+    <div>
+      <Row style={{
+          marginTop: 50,
+          marginLeft: 100,
+          marginRight: 100,
+          marginBottom:50,
+          paddingBottom: 20,
+          display:'flex',
+          justifyContent:'center',
+        }}>
+        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center',flex: 1}}>
+          <img src={policy3} alt="" style={{height:60 }}/>
+          <Text style={{fontWeight:'bold',textAlign:'center'}}>Thương hiệu đảm bảo</Text>
+          <Text style={{textAlign:'center'}}>Nhập khẩu, bảo hành chính hãng</Text>
+        </Col>
+        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
+          <img src={policy1} alt="" style={{height:60}}/>
+          <Text style={{fontWeight:'bold',textAlign:'center'}}>Đổi trả dễ dàng</Text>
+          <Text style={{textAlign:'center'}}>Theo chính sách đổi trả tại Wumiibo Shop</Text>
+        </Col>
+        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
+          <img src={policy4} alt="" style={{height:60}}/>
+          <Text style={{fontWeight:'bold',textAlign:'center'}}>Sản phẩm chất lượng</Text>
+          <Text style={{textAlign:'center'}}>Đảm bảo tương thích và độ bền cao</Text>
+        </Col>
+        <Col style={{display:'flex', flexDirection:'column', justifyItems:'center', flex: 1}}>
+          <img src={policy2} alt="" style={{height:60}}/>
+          <Text style={{fontWeight:'bold',textAlign:'center'}}>Giao hàng tận nơi</Text>
+          <Text style={{textAlign:'center'}}>Tại 63 tỉnh thành</Text>
+        </Col>
+      </Row>
+      <Footer
       style={{
         backgroundColor: "#090d14",
         paddingTop: 24,
@@ -290,6 +325,7 @@ const FooterComponent = () => {
         </Text>
       </Row>
     </Footer>
+    </div>
   );
 };
 

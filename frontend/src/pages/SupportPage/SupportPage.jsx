@@ -152,7 +152,13 @@ const SupportPage = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-
+  const renderTitle = () =>{
+    if(content){
+      return (
+        <Breadcrumb.Item>{content.title}</Breadcrumb.Item>
+      )
+    }
+  };
   const renderContent = () => {
     if (!content) {
       return (
@@ -193,10 +199,11 @@ const SupportPage = () => {
       <Breadcrumb style={{ margin: "16px 0", padding: "0 70px" }}>
         <Breadcrumb.Item>Trang chủ</Breadcrumb.Item>
         <Breadcrumb.Item>Hỗ trợ</Breadcrumb.Item>
+        {renderTitle()}
       </Breadcrumb>
       <Layout
         style={{
-          padding: "15px 70px",
+          padding: "15px 50px",
           background: colorBgContainer,
           borderRadius: borderRadiusLG,
         }}
