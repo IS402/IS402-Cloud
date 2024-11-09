@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema({
     brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true },
     images: [String],
     stock: { type: Number, required: true },
+    selected: {type: Boolean, default: false},
     specifications: [{
       key: String,
       value: String
@@ -22,8 +23,10 @@ const productSchema = new mongoose.Schema({
     averageRating: { type: Number, default: 0 },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now }    
   });
+
+  
 
   const Product = mongoose.model('Product', productSchema);
 

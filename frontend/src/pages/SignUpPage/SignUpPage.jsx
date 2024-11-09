@@ -1,14 +1,30 @@
-import React from 'react';
-import { Form, Input, Button, Typography } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Typography, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
-const {Text}=Typography
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const { Text } = Typography;
 
 const SignUpPage = () => {
-  const onFinish = (values) => {
-    console.log('Form values:', values);
-    // Xử lý logic đăng ký tại đây
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+
+  const onFinish = async (values) => {
+    try {
+      await axios.post('http://localhost:5000/auth/signup', {
+        username: values.username,
+        name: values.name,
+        email: values.email,
+        password: values.password,
+      });
+      message.success('Registration successful!');
+      navigate('/login'); // Redirect to login page after successful signup
+    } catch (error) {
+      setErrorMessage(error.response?.data.message || 'An error occurred');
+    }
   };
+
   return (
     <div className='signup-container'>
       <Form
@@ -21,14 +37,21 @@ const SignUpPage = () => {
         <h2 className="signup-title">Đăng Ký</h2>
 
         <Form.Item
-          className="username"
+          name="username"
           rules={[{ required: true, message: 'Vui lòng nhập tên người dùng!' }]}
         >
           <Input prefix={<UserOutlined />} placeholder="Tên người dùng" autoComplete="off" />
         </Form.Item>
 
         <Form.Item
-          className="email"
+          name="name"
+          rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+        >
+          <Input prefix={<UserOutlined />} placeholder="Họ và tên" autoComplete="off" />
+        </Form.Item>
+
+        <Form.Item
+          name="email"
           rules={[
             { required: true, message: 'Vui lòng nhập email!' },
             { type: 'email', message: 'Định dạng email không đúng!' },
@@ -38,14 +61,15 @@ const SignUpPage = () => {
         </Form.Item>
 
         <Form.Item
-          className="password"
+          name="password"
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
         >
           <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" autoComplete="off" />
         </Form.Item>
 
         <Form.Item
-          className="confirmPassword"
+          name="confirmPassword"
+          dependencies={['password']}
           rules={[
             { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
             ({ getFieldValue }) => ({
@@ -61,18 +85,20 @@ const SignUpPage = () => {
           <Input.Password prefix={<LockOutlined />} placeholder="Xác nhận mật khẩu" autoComplete="off" />
         </Form.Item>
 
+     
+
         <Form.Item>
-          <Button htmlType="submit" className="signup-button">
+          <Button type="primary" htmlType="submit" className="signup-button">
             Đăng Ký
           </Button>
         </Form.Item>
-        <Form.Item style={{display:'flex', justifyContent:'center'}}>
-          <Text>Đă có tài khoản </Text>
-          <Link to="/login">Đăng Nhập</Link>
+        
+        <Form.Item style={{ display: 'flex', justifyContent: 'center' }}>
+          <Text>Đã có tài khoản? </Text> <Link to="/login">Đăng Nhập</Link>
         </Form.Item>
       </Form>
     </div>
-  )
-}
+  );
+};
 
-export default SignUpPage
+export default SignUpPage;
