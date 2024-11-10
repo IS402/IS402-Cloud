@@ -6,6 +6,7 @@ import SupportPage from "../pages/SupportPage/SupportPage.jsx"
 import LoginPage from "../pages/LoginPage/LoginPage.jsx"
 import SignUpPage from "../pages/SignUpPage/SignUpPage.jsx"
 import ProductDetailPage from "../pages/ProductDetailPage/ProductDetailPage.jsx"
+import PaymentPage from "../pages/PayMentPage/PayMentPage.jsx"
 
 export const routes=[
     {
@@ -54,7 +55,14 @@ export const routes=[
         isShowHeader:true
     },
     {
+        path:'/payment',
+        page: PaymentPage,
+        isShowHeader:true,
+
+    },
+    {
         path:'*',
         page:NotFoundPage
-    }
+    },
+    
 ]
