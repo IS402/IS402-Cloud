@@ -1,14 +1,25 @@
-import React from 'react'
-import { Form, Input, Button, Checkbox, Typography } from 'antd';
+import React, { useState } from 'react'
+import { Form, Input, Button, Checkbox, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const {Text}=Typography
 
 const LoginPage = () => {
-  const onFinish = (values) => {
-    console.log('Form values:', values);
-    // Xử lý logic đăng nhập tại đây
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+  const onFinish = async (values) => {
+    try {
+      await axios.post('http://localhost:5000/auth/login', {
+        email: values.email,
+        password: values.password,
+      });message.success('Login successful!');
+      message.success('Login successful!');
+      navigate('/home'); // Redirect to login page after successful signup
+    } catch (error) {
+      setErrorMessage(error.response?.data.message || 'An error occurred');
+    }
   };
   return (
     <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100vh'}}>
@@ -23,6 +34,7 @@ const LoginPage = () => {
 
         <Form.Item
           className="username"
+          name="email"
           rules={[{ required: true, message: 'Vui lòng nhập tài khoản!' }]}
         >
           <Input prefix={<UserOutlined />} placeholder="Tài khoản" />
@@ -30,6 +42,7 @@ const LoginPage = () => {
 
         <Form.Item
           className="password"
+          name="password"
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
         >
           <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />

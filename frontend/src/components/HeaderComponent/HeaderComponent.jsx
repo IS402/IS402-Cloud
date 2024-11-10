@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Layout,
   Menu,
@@ -6,6 +6,7 @@ import {
   Button,
   Dropdown,
   Row,
+  message
 } from "antd";
 import {
   SearchOutlined,
@@ -14,6 +15,7 @@ import {
   RightOutlined,
   EnvironmentOutlined
 } from "@ant-design/icons";
+import axios from 'axios';
 import logo from "../../images/logo1.png";
 import truckImage from "../../images/delivery-truck.png";
 
@@ -55,6 +57,21 @@ const HeaderComponent = () => {
   const [isLoginHovered, setIsLoginHovered] = useState(false);
   const [isCartHovered, setIsCartHovered] = useState(false);
   const [isInvoiceHovered, setIsInvoiceHovered] = useState(false);
+
+  // const [user, setUser] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/auth/check-login', { withCredentials: true });
+        setUserEmail(response.data.email); // Lấy email nếu đăng nhập thành công
+      } catch (error) {
+        console.log("User is not logged in", error.response?.data.message);
+        setUserEmail(null); // Nếu chưa đăng nhập
+      }
+    };
+    checkLoginStatus();
+  }, []);
   const menu = (
     <Menu
       items={[
@@ -170,7 +187,25 @@ const HeaderComponent = () => {
           >
             Giỏ hàng
           </Button>
-          <Button
+          {userEmail ? (
+            <Button
+            type="primary"
+            onMouseEnter={() => setIsLoginHovered(true)}
+            onMouseLeave={() => setIsLoginHovered(false)}
+            icon={<UserOutlined />}
+            style={{
+              borderRadius: 20,
+              border: "none",
+              height: 35,
+              boxShadow: "none",
+              backgroundColor: isLoginHovered ? hoverColor : primaryColor,
+              fontSize: 16,
+            }}
+          >
+            {userEmail}
+          </Button>
+          ) : (
+            <Button
             type="primary"
             onMouseEnter={() => setIsLoginHovered(true)}
             onMouseLeave={() => setIsLoginHovered(false)}
@@ -186,7 +221,8 @@ const HeaderComponent = () => {
           >
             Đăng nhập
           </Button>
-        </Row>
+          )}
+            </Row>
         <Row
           style={{
             display: "flex",
