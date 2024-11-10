@@ -1,0 +1,53 @@
+ul {
+    list-style: none;
+}
+
+.listItem {
+    font-size: 16px;
+    margin: 2%;
+}
+
+.title {
+    font-size: 25px;
+    color: red;
+    justify-self: center;
+}
+
+.totalPrice {
+    font-size: 20px;
+    margin: 2%;
+}
+
+.pay {
+    margin: 5%;
+    background-color: #ed3b3b;
+    padding: 10px;
+    border-radius: 20%;
+    cursor: pointer;
+    color: white;
+}
+
+.container {
+    margin: 5%;
+    display: flex;
+}
+
+.cart {
+    flex: 1;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+
+}
+
+.select {
+    position: fixed; /* Cố định phần tử */
+    top: 100px;       /* Khoảng cách từ phía trên */
+    right: 20px;     /* Khoảng cách từ phía bên phải */
+    width: 300px;    /* Độ rộng của khung */
+    padding: 20px;
+    background-color: #f8f8f8;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    height: 500px; /* Đảm bảo phần tử có độ cao tự động */
+    z-index: 1000; /* Đảm bảo phần tử không bị che bởi nội dung khác */
+    overflow-x: auto;
+    overflow-y: scroll;
+}
