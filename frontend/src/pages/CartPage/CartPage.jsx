@@ -18,7 +18,7 @@ const { Content, Sider } = Layout;
 
 const whiteColor = "#ffffff";
 const { Text } = Typography;
-const OrderPage = () => {
+const CartPage = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -155,4 +155,4 @@ const OrderPage = () => {
   );
 };
 
-export default OrderPage;
+export default CartPage;
