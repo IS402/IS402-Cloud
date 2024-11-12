@@ -11,12 +11,16 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const onFinish = async (values) => {
     try {
-      await axios.post('http://localhost:5000/auth/login', {
+      const response = await axios.post('http://localhost:5000/auth/login', {
         email: values.email,
         password: values.password,
       });
       message.success('Login successful!');
-      navigate('/home'); // Redirect to login page after successful signup
+      if (response.data.role === 'admin') {
+        navigate('/admin/brand');
+      } else {
+        navigate('/home');
+      }
     } catch (error) {
       setErrorMessage(error.response?.data.message || 'An error occurred');
     }

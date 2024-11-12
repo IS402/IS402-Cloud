@@ -9,6 +9,5 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.post("/refresh-token", refreshToken);
 router.get("/profile", protectRoute, getProfile);
-router.get("/profile", protectRoute, getProfile);
 
 export default router;

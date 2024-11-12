@@ -105,7 +105,7 @@ const AdminBrandPage = () => {
   };
   const handleSubmit = async (values) => {
     try {
-      await axios.post('http://localhost:5000/api/brand', {
+      await axios.post('http://localhost:5000/api/brand/', {
         name: values.brandName,
         description: values.brandDescription,
         image: values.brandImage,

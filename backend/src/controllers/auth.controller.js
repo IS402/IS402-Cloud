@@ -66,13 +66,15 @@ export const login = async (req, res) => {
 	try {
 		const { email, password } = req.body;
 		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(400).json({ message: "User not found" });
+		}
 		console.log(user.password);
 
 		if (user && (await user.comparePassword(password))) {
 			const { accessToken, refreshToken } = generateTokens(user._id);
 			await storeRefreshToken(user._id, refreshToken);
 			setCookies(res, accessToken, refreshToken);
-
 			res.json({
 				_id: user._id,
 				name: user.name,
