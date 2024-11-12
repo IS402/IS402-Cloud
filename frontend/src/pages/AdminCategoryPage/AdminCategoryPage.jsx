@@ -85,8 +85,8 @@ const data = [
     tags: ["cool", "teacher"],
   },
 ];
-const AdminUserPage = () => {
-  const [isHovered, setIsHovered] = useState(false);
+const AdminCategoryPage = () => {
+    const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const showModal = () => {
@@ -98,7 +98,7 @@ const AdminUserPage = () => {
   };
   return (
     <div style={{ display: "flex", rowGap: 20, flexDirection: "column" }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold" }}>Khách hàng</Text>
+      <Text style={{ fontSize: 20, fontWeight: "bold" }}>Danh mục</Text>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <Button
           type="primary"
@@ -115,12 +115,12 @@ const AdminUserPage = () => {
             fontSize: 16,
           }}
         >
-          Thêm khách hàng
+          Thêm danh mục
         </Button>
       </div>
       <Table columns={columns} dataSource={data} />;
       <Modal
-        title="Thêm khách hàng"
+        title="Thêm thương hiệu"
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null} // You can customize the footer if needed
@@ -151,7 +151,7 @@ const AdminUserPage = () => {
             <Input.TextArea placeholder="Nhập mô tả sản phẩm" />
           </Form.Item>
 
-          <Form.Item style={{ display: "flex", justifyContent: "center" }}>
+          <Form.Item style={{display:'flex', justifyContent:'center'}}>
             <Button
               type="primary"
               style={{
@@ -161,7 +161,7 @@ const AdminUserPage = () => {
                 boxShadow: "none",
                 backgroundColor: primaryColor,
                 fontSize: 16,
-                minWidth: 180,
+                minWidth:180
               }}
             >
               Lưu
@@ -170,7 +170,7 @@ const AdminUserPage = () => {
         </Form>
       </Modal>
     </div>
-  );
-};
+  )
+}
 
-export default AdminUserPage;
+export default AdminCategoryPage

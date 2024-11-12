@@ -10,11 +10,5 @@ router.post("/logout", logout);
 router.post("/refresh-token", refreshToken);
 router.get("/profile", protectRoute, getProfile);
 router.get("/profile", protectRoute, getProfile);
-router.get('/check-login', protectRoute, (req, res) => {
-    // Trả về thông tin người dùng khi đã xác thực
-    res.json({
-      email: req.user.email,  // Email của người dùng
-    });
-  });
 
 export default router;

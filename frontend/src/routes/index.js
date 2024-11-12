@@ -11,6 +11,8 @@ import AdminProductPage from "../pages/AdminProductPage/AdminProductPage.jsx"
 import AdminBrandPage from "../pages/AdminBrandPage/AdminBrandPage.jsx"
 import AdminUserPage from "../pages/AdminUserPage/AdminUserPage.jsx"
 import AdminOrderPage from "../pages/AdminOrderPage/AdminOrderPage.jsx"
+import AdminCategoryPage from "../pages/AdminCategoryPage/AdminCategoryPage.jsx"
+import AdminChartPage from "../pages/AdminChartPage/AdminChartPage.jsx"
 
 export const routes=[
     {
@@ -76,25 +78,37 @@ export const routes=[
     {
         path:'/admin/product',
         page: AdminProductPage,
-        isShowHeader:true,
+        isShowHeader:false,
         isAdminPage: true
     },
     {
         path:'/admin/brand',
         page: AdminBrandPage,
-        isShowHeader:true,
+        isShowHeader:false,
         isAdminPage: true
     },
     {
         path:'/admin/user',
         page: AdminUserPage,
-        isShowHeader:true,
+        isShowHeader:false,
+        isAdminPage: true
+    },
+    {
+        path:'/admin/category',
+        page: AdminCategoryPage,
+        isShowHeader:false,
         isAdminPage: true
     },
     {
         path:'/admin/order',
         page: AdminOrderPage,
-        isShowHeader:true,
+        isShowHeader:false,
+        isAdminPage: true
+    },
+    {
+        path:'/admin/chart',
+        page: AdminChartPage,
+        isShowHeader:false,
         isAdminPage: true
     },
     {

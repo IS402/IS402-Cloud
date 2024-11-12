@@ -14,7 +14,7 @@ const LoginPage = () => {
       await axios.post('http://localhost:5000/auth/login', {
         email: values.email,
         password: values.password,
-      });message.success('Login successful!');
+      });
       message.success('Login successful!');
       navigate('/home'); // Redirect to login page after successful signup
     } catch (error) {

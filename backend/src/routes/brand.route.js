@@ -12,6 +12,7 @@ import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.get("/", protectRoute, adminRoute, getAllBrands);
+// router.get("/", getAllBrands);
 router.get("/:id", protectRoute, adminRoute, getBrandById);
 router.post("/", protectRoute, adminRoute, createBrand);
 router.patch("/:id", protectRoute, adminRoute, updateBrand);
