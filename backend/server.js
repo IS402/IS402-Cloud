@@ -10,6 +10,7 @@ import productRoutes from './src/routes/product.route.js';
 import cartRoutes from './src/routes/cart.route.js';
 import categoryRoutes from './src/routes/category.route.js';
 import brandRoutes from './src/routes/brand.route.js';
+import userRoutes from './src/routes/user.route.js'
 import { connectDB } from "./src/lib/db.js";
 
 // Load environment variables
@@ -34,6 +35,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/brand", brandRoutes);
+app.use("/api/user", userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

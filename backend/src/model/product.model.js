@@ -7,7 +7,10 @@ const productSchema = new mongoose.Schema({
     discountPrice: Number,
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true },
-    images: [String],
+    images: [{
+      key:String,
+      value:String
+    }],
     stock: { type: Number, required: true },
     selected: {type: Boolean, default: false},
     specifications: [{

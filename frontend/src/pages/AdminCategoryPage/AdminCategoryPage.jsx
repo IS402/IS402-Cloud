@@ -7,87 +7,44 @@ import {
   Button,
   Modal,
   Form,
+  message,
   Input,
+  Upload,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import axios from 'axios';
 
 const { Text } = Typography;
 const primaryColor = "#EC3C3C";
 const hoverColor = "#f65668";
-const columns = [
-  {
-    title: "Name",
-    dataIndex: "name",
-    key: "name",
-    render: (text) => <a>{text}</a>,
-  },
-  {
-    title: "Age",
-    dataIndex: "age",
-    key: "age",
-  },
-  {
-    title: "Address",
-    dataIndex: "address",
-    key: "address",
-  },
-  {
-    title: "Tags",
-    key: "tags",
-    dataIndex: "tags",
-    render: (_, { tags }) => (
-      <>
-        {tags.map((tag) => {
-          let color = tag.length > 5 ? "geekblue" : "green";
-          if (tag === "loser") {
-            color = "volcano";
-          }
-          return (
-            <Tag color={color} key={tag}>
-              {tag.toUpperCase()}
-            </Tag>
-          );
-        })}
-      </>
-    ),
-  },
-  {
-    title: "Action",
-    key: "action",
-    render: (_, record) => (
-      <Space size="middle">
-        <a>Edit</a>
-        <a>Delete</a>
-      </Space>
-    ),
-  },
-];
-const data = [
-  {
-    key: "1",
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"],
-  },
-  {
-    key: "2",
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["loser"],
-  },
-  {
-    key: "3",
-    name: "Joe Black",
-    age: 32,
-    address: "Sydney No. 1 Lake Park",
-    tags: ["cool", "teacher"],
-  },
-];
+
 const AdminCategoryPage = () => {
-    const [isHovered, setIsHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [fileList, setFileList] = useState([]); 
+
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/category/');
+        setData(response.data);
+      } catch (err) {
+        setError(err.message);
+        message.error('Failed to load categories');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -95,7 +52,124 @@ const AdminCategoryPage = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setEditingRecord(false);
+    setFileList([]);
+    setImageUrl("");
   };
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.error("Bạn chỉ có thể tải lên hình ảnh!");
+    }
+    return isImage;
+  };
+  const handleImageChange = (info) => {
+    // If the fileList has new files
+    if (info.fileList && info.fileList.length > 0) {
+      const newFileList = info.fileList.slice(-1); // Keep only the last selected file
+      setFileList(newFileList); // Update the file list
+      const file = newFileList[0];
+      const imageUrl = file.thumbUrl || URL.createObjectURL(file.originFileObj);
+      setImageUrl(imageUrl); // Update the image preview URL
+    } else {
+      setFileList([]); // Clear the file list if no image is selected
+      setImageUrl("");  // Reset the preview
+    }
+  };
+  const handleSubmit = async (values) => {
+    try {
+      const payload = {
+        name: values.categoryName,
+        description: values.categoryDescription,
+        slug:values.categorySlug,
+        image: imageUrl, // Lấy URL ảnh từ trạng thái
+      };
+      if (editingRecord) {
+        // Chỉnh sửa sản phẩm
+        await axios.patch(`http://localhost:5000/api/category/${editingRecord._id}`, payload);
+        message.success("Cập nhật sản phẩm thành công!");
+      } else {
+        // Thêm sản phẩm
+        await axios.post('http://localhost:5000/api/category/', payload);
+        message.success("Thêm sản phẩm thành công!");
+      }
+      handleCancel();
+    } catch (error) {
+      setErrorMessage(error.response?.data.message || 'An error occurred');
+    }
+  };
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setImageUrl(record.image);
+    setIsModalVisible(true);
+  };
+  const confirmDelete = (id) => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa danh mục này?",
+      content: "Thao tác này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: () => handleDelete(id), // Gọi hàm xóa khi xác nhận
+    });
+  };
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/category/${id}`);
+      message.success("Xóa danh mục thành công!");
+  
+      // Cập nhật lại danh sách sau khi xóa
+      setData((prevData) => prevData.filter((item) => item._id !== id));
+    } catch (error) {
+      message.error(error.response?.data.message || "Đã xảy ra lỗi khi xóa!");
+    }
+  };
+  const columns = [
+    {
+      title: "Logo",
+      dataIndex: "image",
+      key: "image",
+      render: (image) => image ? (<img src={image} alt="Logo" style={{ width: '40px', height: 'auto' }} />) : null,
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      dataIndex: 'status',
+      
+      render: (_, { status }) => {
+        let color = 'green'; // Mặc định là màu xanh
+        if (status === 'inactive') {
+          color = 'volcano'; // Nếu status là 'inactive', thay màu thành đỏ
+        }
+    
+        return (
+          <Tag color={color} key={status}>
+            {status.toUpperCase()}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <a onClick={() => handleEdit(record)}>Edit</a>
+          <a onClick={() => confirmDelete(record._id)}>Delete</a>
+        </Space>
+      ),
+    },
+  ];
   return (
     <div style={{ display: "flex", rowGap: 20, flexDirection: "column" }}>
       <Text style={{ fontSize: 20, fontWeight: "bold" }}>Danh mục</Text>
@@ -120,7 +194,7 @@ const AdminCategoryPage = () => {
       </div>
       <Table columns={columns} dataSource={data} />;
       <Modal
-        title="Thêm thương hiệu"
+        title={editingRecord ? "Chỉnh sửa danh mục" : "Thêm danh mục"}
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null} // You can customize the footer if needed
@@ -128,32 +202,80 @@ const AdminCategoryPage = () => {
       >
         <Form
           layout="vertical"
-          onFinish={(values) => {
-            console.log("Form values:", values);
-            handleCancel(); // Close the modal after form submission
-          }}
+          onFinish={handleSubmit}
+          initialValues={editingRecord ?{
+            categoryName: editingRecord?.name,
+            categoryDescription: editingRecord?.description,
+          }: undefined}
         >
           <Form.Item
-            label="Tên sản phẩm"
-            name="productName"
-            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
+            label="Tên danh mục"
+            name="categoryName"
+            rules={[{ required: true, message: "Vui lòng nhập tên danh mục!" }]}
           >
             <Input placeholder="Nhập tên sản phẩm" />
           </Form.Item>
 
           <Form.Item
             label="Mô tả sản phẩm"
-            name="productDescription"
-            rules={[
-              { required: true, message: "Vui lòng nhập mô tả sản phẩm!" },
-            ]}
+            name="categoryDescription"
           >
-            <Input.TextArea placeholder="Nhập mô tả sản phẩm" />
+            <Input.TextArea placeholder="Nhập mô tả danh mục" />
           </Form.Item>
 
-          <Form.Item style={{display:'flex', justifyContent:'center'}}>
+          <Form.Item
+            label="Tên slug"
+            name="categorySlug"
+            rules={[{ required: true, message: "Vui lòng nhập slug!" }]}
+          >
+            <Input placeholder="Nhập slug" />
+          </Form.Item>
+
+          <Form.Item
+            label="Ảnh thương hiệu"
+            name="brandImage"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => e && e.fileList}
+            // rules={[{ required: true, message: "Vui lòng chọn ảnh thương hiệu!" }]}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Upload
+                name="brandImage"
+                listType="picture-card"
+                beforeUpload={beforeUpload}
+                showUploadList={false}
+                onChange={handleImageChange}
+                style={{ width: '200px' }}
+              >
+                <Button 
+                  icon={<PlusOutlined />} 
+                  style={{
+                    margin: '0', 
+                    padding: '0 10px', 
+                    height: '32px', 
+                    fontSize: '14px',
+                    border:'none',
+                    boxShadow:'none',
+                    backgroundColor:'#FAFAFA'
+                  }}
+                >
+                  Chọn ảnh
+                </Button>
+              </Upload>
+            </div>
+
+            {/* Display Image Preview */}
+            {imageUrl && (
+              <div style={{ textAlign: "center", marginTop: "10px" }}>
+                <img src={imageUrl} alt="brand" style={{ width: '100%', maxWidth: '200px' }} />
+              </div>
+            )}
+          </Form.Item>
+
+          <Form.Item  style={{ display: "flex", justifyContent: "center" }}>
             <Button
               type="primary"
+              htmlType="submit"
               style={{
                 borderRadius: 10,
                 border: "none",
@@ -161,10 +283,10 @@ const AdminCategoryPage = () => {
                 boxShadow: "none",
                 backgroundColor: primaryColor,
                 fontSize: 16,
-                minWidth:180
+                minWidth: 180,
               }}
             >
-              Lưu
+              {editingRecord ? "Cập nhật" : "Lưu"}
             </Button>
           </Form.Item>
         </Form>

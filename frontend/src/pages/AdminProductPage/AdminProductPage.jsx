@@ -10,89 +10,83 @@ import {
   Input,
   message,
   Upload,
-  Spin
+  Select,
+  Spin,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import axios from "axios";
 
 const { Text } = Typography;
+// const [form] = Form.useForm();
 const primaryColor = "#EC3C3C";
 const hoverColor = "#f65668";
-const columns = [
-  {
-    title: "Name",
-    dataIndex: "name",
-    key: "name",
-    render: (text) => <a>{text}</a>,
-  },
-  {
-    title: "Age",
-    dataIndex: "age",
-    key: "age",
-  },
-  {
-    title: "Address",
-    dataIndex: "address",
-    key: "address",
-  },
-  {
-    title: "Tags",
-    key: "tags",
-    dataIndex: "tags",
-    render: (_, { tags }) => (
-      <>
-        {tags.map((tag) => {
-          let color = tag.length > 5 ? "geekblue" : "green";
-          if (tag === "loser") {
-            color = "volcano";
-          }
-          return (
-            <Tag color={color} key={tag}>
-              {tag.toUpperCase()}
-            </Tag>
-          );
-        })}
-      </>
-    ),
-  },
-  {
-    title: "Action",
-    key: "action",
-    render: (_, record) => (
-      <Space size="middle">
-        <a>Edit</a>
-        <a>Delete</a>
-      </Space>
-    ),
-  },
-];
-const data = [
-  {
-    key: "1",
-    name: "John Brown",
-    age: 32,
-    address: "New York No. 1 Lake Park",
-    tags: ["nice", "developer"],
-  },
-  {
-    key: "2",
-    name: "Jim Green",
-    age: 42,
-    address: "London No. 1 Lake Park",
-    tags: ["loser"],
-  },
-  {
-    key: "3",
-    name: "Joe Black",
-    age: 32,
-    address: "Sydney No. 1 Lake Park",
-    tags: ["cool", "teacher"],
-  },
-];
+
 const AdminProductPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
-  const [fileList, setFileList] = useState([]); 
+  const [fileList, setFileList] = useState([]);
+  const [images, setImages] = useState([
+    { key: '', value: '' }, // Mỗi đối tượng đại diện cho một hình ảnh
+  ]);
+
+
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/products/");
+        setData(response.data.products);
+      } catch (err) {
+        setError(err.message);
+        message.error("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/brand/");
+        setBrands(response.data);
+      } catch (err) {
+        setError(err.message);
+        message.error("Failed to load brands");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBrands();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/category/");
+        setCategories(response.data);
+      } catch (err) {
+        setError(err.message);
+        message.error("Failed to load categories");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategory();
+  }, []);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -100,6 +94,9 @@ const AdminProductPage = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setEditingRecord(false);
+    setFileList([]);
+    setImageUrl("");
   };
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith("image/");
@@ -108,18 +105,195 @@ const AdminProductPage = () => {
     }
     return isImage;
   };
-  const handleImageChange = (info) => {
+  const handleImageChange = (info, index) => {
+    const newImages = [...images];
+  
     if (info.fileList && info.fileList.length > 0) {
-      const newFileList = info.fileList.slice(-1);
-      setFileList(newFileList);
-      const file = newFileList[0];
+      const file = info.fileList[info.fileList.length - 1]; // Lấy file cuối
       const imageUrl = file.thumbUrl || URL.createObjectURL(file.originFileObj);
-      setImageUrl(imageUrl);
+  
+      // Cập nhật hình ảnh ở vị trí index
+      newImages[index] = {
+        ...newImages[index],
+        value: imageUrl,
+      };
     } else {
-      setFileList([]);
-      setImageUrl("");
+      // Xóa hình ảnh nếu không có file
+      newImages[index] = null;
+    }
+  
+    setImages(newImages);
+  };
+  
+  const handleSubmit = async (values) => {
+    try {
+      const payload = {
+        name: values.productName,
+        description: values.productDescription,
+        price: values.productPrice,
+        discountPrice: values.productDiscountPrice || 0,
+        brand: values.productBrand,
+        category: values.productCategory,
+        stock: values.productStock || 0,
+        specifications: values.productSpecifications || [],
+        images: values.images || [],
+      };
+      if (editingRecord) {
+        // Chỉnh sửa sản phẩm
+        await axios.patch(
+          `http://localhost:5000/api/products/${editingRecord._id}`,
+          payload
+        );
+        message.success("Cập nhật sản phẩm thành công!");
+      } else {
+        // Thêm sản phẩm
+        await axios.post("http://localhost:5000/api/products/", payload);
+        console.log(values.images)
+        message.success("Thêm sản phẩm thành công!");
+      }
+      handleCancel();
+    } catch (error) {
+      setErrorMessage(error.response?.data.message || "An error occurred");
     }
   };
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setImageUrl(record.image);
+    setIsModalVisible(true);
+  };
+  const confirmDelete = (id) => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+      content: "Thao tác này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: () => handleDelete(id), // Gọi hàm xóa khi xác nhận
+    });
+  };
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/products/${id}`);
+      message.success("Xóa danh mục thành công!");
+
+      // Cập nhật lại danh sách sau khi xóa
+      setData((prevData) => prevData.filter((item) => item._id !== id));
+    } catch (error) {
+      message.error(error.response?.data.message || "Đã xảy ra lỗi khi xóa!");
+    }
+  };
+  const columns = [
+    {
+      title: "Image",
+      dataIndex: "images",
+      key: "images",
+      render: (_, { images }) => {
+        // Kiểm tra nếu mảng images rỗng hoặc không có ảnh
+        if (images && images.length > 0) {
+          return (
+            <img
+              src={images[0]} // Lấy ảnh đầu tiên từ mảng images
+              alt="Product"
+              style={{ width: 50, height: "auto" }}
+            />
+          );
+        } else {
+          return <span></span>;
+        }
+      },
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: "Brand",
+      dataIndex: "brand",
+      key: "brand",
+      render: (_, { brand }) => {
+        if (!brand) return null; // Trường hợp không có brand
+
+        let color = "blue"; // Mặc định là màu xanh
+        if (brand.status === "null") {
+          color = "volcano"; // Nếu brand có status là 'inactive', thay màu thành đỏ
+        }
+
+        return (
+          <Tag color={color} key={brand._id}>
+            {brand.name.toUpperCase()}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Category",
+      dataIndex: "category",
+      key: "category",
+      render: (_, { category }) => {
+        if (!category) return null; // Trường hợp không có brand
+
+        let color = "blue"; // Mặc định là màu xanh
+        if (category.status === "null") {
+          color = "volcano"; // Nếu brand có status là 'inactive', thay màu thành đỏ
+        }
+
+        return (
+          <Tag color={color} key={category._id}>
+            {category.name.toUpperCase()}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+    },
+    {
+      title: "Discount price",
+      dataIndex: "discountPrice",
+      key: "discountPrice",
+    },
+    {
+      title: "Stock",
+      dataIndex: "stock",
+      key: "stock",
+    },
+    {
+      title: "Status",
+      key: "status",
+      dataIndex: "status",
+
+      render: (_, { status }) => {
+        let color = "green"; // Mặc định là màu xanh
+        if (status === "inactive") {
+          color = "volcano"; // Nếu status là 'inactive', thay màu thành đỏ
+        }
+
+        return (
+          <Tag color={color} key={status}>
+            {status.toUpperCase()}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <a onClick={() => handleEdit(record)}>Edit</a>
+          <a onClick={() => confirmDelete(record._id)}>Delete</a>
+        </Space>
+      ),
+    },
+  ];
   return (
     <div style={{ display: "flex", rowGap: 20, flexDirection: "column" }}>
       <Text style={{ fontSize: 20, fontWeight: "bold" }}>Sản phẩm</Text>
@@ -144,7 +318,7 @@ const AdminProductPage = () => {
       </div>
       <Table columns={columns} dataSource={data} />;
       <Modal
-        title="Thêm sản phẩm"
+        title={editingRecord ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null} // You can customize the footer if needed
@@ -152,10 +326,15 @@ const AdminProductPage = () => {
       >
         <Form
           layout="vertical"
-          onFinish={(values) => {
-            console.log("Form values:", values);
-            handleCancel(); // Close the modal after form submission
-          }}
+          onFinish={handleSubmit}
+          initialValues={
+            editingRecord
+              ? {
+                  productName: editingRecord?.name,
+                  productDescription: editingRecord?.description,
+                }
+              : undefined
+          }
         >
           <Form.Item
             label="Tên sản phẩm"
@@ -168,9 +347,7 @@ const AdminProductPage = () => {
           <Form.Item
             label="Mô tả sản phẩm"
             name="productDescription"
-            rules={[
-              { required: true, message: "Vui lòng nhập mô tả sản phẩm!" },
-            ]}
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
           >
             <Input.TextArea placeholder="Nhập mô tả sản phẩm" />
           </Form.Item>
@@ -178,7 +355,9 @@ const AdminProductPage = () => {
           <Form.Item
             label="Giá"
             name="productPrice"
-            rules={[{ required: true, message: "Vui lòng nhập giá tiền sản phẩm!" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập giá tiền sản phẩm!" },
+            ]}
           >
             <Input placeholder="Nhập giá tiền sản phẩm" />
           </Form.Item>
@@ -192,73 +371,224 @@ const AdminProductPage = () => {
           </Form.Item>
 
           <Form.Item
-            label="Danh mục"
-            name="productCategory"
-            rules={[{ required: true, message: "Vui lòng nhập danh mục sản phẩm!" }]}
+            label="Thương hiệu"
+            name="productBrand"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập thương hiệu sản phẩm!",
+              },
+            ]}
           >
-            <Input placeholder="Nhập danh mục sản phẩm" />
+            <Select placeholder="Chọn thương hiệu">
+              {brands.map((brand) => (
+                <Select.Option key={brand._id} value={brand._id}>
+                  {brand.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
-            label="Hãng sản xuất"
-            name="productBrand"
-            rules={[{ required: true, message: "Vui lòng nhập hãng sản xuất sản phẩm!" }]}
+            label="Danh mục"
+            name="productCategory"
+            rules={[
+              { required: true, message: "Vui lòng nhập danh mục sản phẩm!" },
+            ]}
           >
-            <Input placeholder="Nhập hãng sản xuất sản phẩm" />
+            <Select placeholder="Chọn danh mục">
+              {categories.map((category) => (
+                <Select.Option key={category._id} value={category._id}>
+                  {category.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
+
+          <Form.List name="productSpecifications">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, fieldKey }) => (
+                  <div
+                    key={key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <Form.Item
+                      name={[name, "key"]}
+                      fieldKey={[fieldKey, "key"]}
+                      rules={[
+                        { required: true, message: "Nhập tên thông số!" },
+                      ]}
+                      style={{ flex: 1, marginRight: "8px" }}
+                    >
+                      <Input placeholder="Tên thông số (e.g., Dung lượng)" />
+                    </Form.Item>
+                    <Form.Item
+                      name={[name, "value"]}
+                      fieldKey={[fieldKey, "value"]}
+                      rules={[
+                        { required: true, message: "Nhập giá trị thông số!" },
+                      ]}
+                      style={{ flex: 1, marginRight: "8px" }}
+                    >
+                      <Input placeholder="Giá trị (e.g., 256GB)" />
+                    </Form.Item>
+                    <button
+                      onClick={() => remove(name)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ❌
+                    </button>
+                  </div>
+                ))}
+                <Form.Item>
+                  <button
+                    type="button"
+                    onClick={() => add()}
+                    style={{
+                      padding: "8px 12px",
+                      border: "1px solid #1890ff",
+                      background: "#f0f5ff",
+                      color: "#1890ff",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    + Thêm thông số
+                  </button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
 
           <Form.Item
             label="Tồn kho"
-            name="productBrand"
-            rules={[{ required: true, message: "Vui lòng nhập hãng sản xuất sản phẩm!" }]}
+            name="productStock"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập hãng sản xuất sản phẩm!",
+              },
+            ]}
           >
             <Input placeholder="Nhập hãng sản xuất sản phẩm" />
           </Form.Item>
 
-          <Form.Item
-            label="Ảnh thương hiệu"
-            name="brandImage"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => e && e.fileList}
-            // rules={[{ required: true, message: "Vui lòng chọn ảnh thương hiệu!" }]}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Upload
-                name="brandImage"
-                listType="picture-card"
-                beforeUpload={beforeUpload}
-                showUploadList={false}
-                onChange={handleImageChange}
-                style={{ width: '200px' }}
-              >
-                <Button 
-                  icon={<PlusOutlined />} 
-                  style={{
-                    margin: '0', 
-                    padding: '0 10px', 
-                    height: '32px', 
-                    fontSize: '14px',
-                    border:'none',
-                    boxShadow:'none',
-                    backgroundColor:'#FAFAFA'
-                  }}
-                >
-                  Chọn ảnh
-                </Button>
-              </Upload>
-            </div>
+          <Form.List name="images">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, fieldKey }) => (
+                  <div
+                    key={key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <Form.Item
+                      name={[name, "key"]}
+                      fieldKey={[fieldKey, "key"]}
+                      rules={[
+                        { required: true, message: "Nhập tên hình ảnh!" },
+                      ]}
+                      style={{ flex: 1, marginRight: "8px" }}
+                    >
+                      <Input placeholder="Tên hình ảnh (e.g., Mặt trước)"
+                      onChange={(e) => {
+                        const newImages = [...images];
+                        newImages[name] = {
+                          ...newImages[name],
+                          key: e.target.value, // Cập nhật key
+                        };
+                        setImages(newImages);
+                      }} />
+                    </Form.Item>
 
-            {/* Display Image Preview */}
-            {imageUrl && (
-              <div style={{ textAlign: "center", marginTop: "10px" }}>
-                <img src={imageUrl} alt="brand" style={{ width: '100%', maxWidth: '200px' }} />
-              </div>
+                    <Form.Item
+                      name={[name, "value"]}
+                      fieldKey={[fieldKey, "value"]}
+                      rules={[
+                        { required: true, message: "Vui lòng chọn hình ảnh!" },
+                      ]}
+                      style={{ flex: 2, marginRight: "8px" }}
+                    >
+                      <Upload
+                        name="brandImage"
+                        listType="picture-card"
+                        beforeUpload={(file) => {
+                          const newImages = [...images];
+                          const imageUrl = URL.createObjectURL(file); // Tạo URL tạm thời
+                          newImages[name] = {
+                            ...newImages[name],
+                            value: imageUrl, // Cập nhật value
+                          };
+                          setImages(newImages);
+                          return false; // Ngăn upload tự động
+                        }}
+                        showUploadList={false}
+                        onChange={(info) => handleImageChange(info, name)} 
+                        style={{ width: '100px', height:'50px' }}
+                      >
+                        + Chọn hình ảnh
+                      </Upload>
+                    </Form.Item>
+                    {images[name]?.value && (
+                      <div style={{ textAlign: "center", marginTop: "10px" }}>
+                        <img
+                          src={images[name].value}
+                          alt="brand"
+                          style={{ width: "100%", maxWidth: "100px" }}
+                        />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => remove(name)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        marginLeft: "8px",
+                      }}
+                    >
+                      ❌
+                    </button>
+                  </div>
+                ))}
+
+                <Form.Item>
+                  <button
+                    type="button"
+                    onClick={() => add()}
+                    style={{
+                      padding: "8px 12px",
+                      border: "1px solid #1890ff",
+                      background: "#f0f5ff",
+                      color: "#1890ff",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    + Thêm hình ảnh
+                  </button>
+                </Form.Item>
+              </>
             )}
-          </Form.Item>
+          </Form.List>
 
           <Form.Item style={{ display: "flex", justifyContent: "center" }}>
             <Button
               type="primary"
+              htmlType="submit"
               style={{
                 borderRadius: 10,
                 border: "none",
@@ -269,7 +599,7 @@ const AdminProductPage = () => {
                 minWidth: 180,
               }}
             >
-              Lưu
+              {editingRecord ? "Cập nhật" : "Lưu"}
             </Button>
           </Form.Item>
         </Form>

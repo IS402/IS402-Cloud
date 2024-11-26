@@ -45,7 +45,7 @@ export const getProductByCategory = async (req, res) => {
 };
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, image } = req.body;
+    const { name, description,slug, image } = req.body;
 
     let cloudinaryResponse = null;
 
@@ -56,6 +56,7 @@ export const createCategory = async (req, res) => {
     const category = await Category.create({
       name,
       description,
+      slug,
       image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
     });
 
@@ -75,7 +76,7 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    const { name, description, image } = req.body;
+    const { name, description, slug, image } = req.body;
 
     let cloudinaryResponse = null;
 
@@ -85,6 +86,7 @@ export const updateCategory = async (req, res) => {
 
     category.name = name;
     category.description = description;
+    category.slug=slug;
     category.image = cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : category.image;
 
     const updatedCategory = await category.save();

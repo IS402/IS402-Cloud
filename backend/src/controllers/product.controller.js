@@ -1,16 +1,22 @@
 import { redis } from "../lib/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../model/product.model.js";
+import Category from "../model/category.model.js";
+import Brand from "../model/brand.model.js"
 
 export const getAllProducts = async (req, res) => {
 	try {
-		const products = await Product.find({}); // find all products
+		const products = await Product.find()
+		.populate('category')
+		.populate('brand')  
+		.sort({ name: 1 });
 		res.json({ products });
 	} catch (error) {
 		console.log("Error in getAllProducts controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
+
 
 export const getFeaturedProducts = async (req, res) => {
 	try {
@@ -41,20 +47,36 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
 	try {
-		const { name, description, price, image, category } = req.body;
+		const { name, description, price, brand, stock, specifications, images, category } = req.body;
 
-		let cloudinaryResponse = null;
-
-		if (image) {
-			cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "products" });
-		}
-
+		const uploadedImages = [];
+		if (images && images.length > 0) {
+			for (const image of images) {
+			  const file = image.value.file; // Lấy tệp từ value.file
+	  
+			  // Upload file lên Cloudinary
+			  const cloudinaryResponse = await cloudinary.uploader.upload(file.path, {
+				folder: "products",
+			  });
+	  
+			  // Lưu URL ảnh vào mảng uploadedImages
+			  uploadedImages.push({
+				url: cloudinaryResponse.secure_url,
+				key: image.key, // Lưu key để biết ảnh này là của phần nào
+			  });
+			}
+		  }
+		console.log(uploadedImages);
 		const product = await Product.create({
 			name,
 			description,
 			price,
-			image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
+			discountPrice: req.body.discountPrice || 0,
 			category,
+			brand,
+			images: uploadedImages,
+			stock,
+			specifications: specifications || [],
 		});
 
 		res.status(201).json(product);

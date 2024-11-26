@@ -18,40 +18,11 @@ import axios from 'axios';
 const { Text } = Typography;
 const primaryColor = "#EC3C3C";
 const hoverColor = "#f65668";
-const columns = [
-  {
-    title: "Logo",
-    dataIndex: "image",
-    key: "image",
-    render: (image) => <img src={image} alt="Logo" style={{ width: '40px', height: 'auto' }} />,
-  },
-  {
-    title: "Name",
-    dataIndex: "name",
-    key: "name",
-  },
-  {
-    title: "Description",
-    dataIndex: "description",
-    key: "description",
-  },
-  {
-    title: "Action",
-    key: "action",
-    render: (_, record) => (
-      <Space size="middle">
-        <a>Edit</a>
-        <a>Delete</a>
-      </Space>
-    ),
-  },
-];
-const data = [
 
-];
 const AdminBrandPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [fileList, setFileList] = useState([]); 
 
@@ -82,6 +53,9 @@ const AdminBrandPage = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setEditingRecord(false);
+    setFileList([]);
+    setImageUrl("");
   };
   const beforeUpload = (file) => {
     const isImage = file.type.startsWith("image/");
@@ -105,17 +79,79 @@ const AdminBrandPage = () => {
   };
   const handleSubmit = async (values) => {
     try {
-      await axios.post('http://localhost:5000/api/brand/', {
+      const payload = {
         name: values.brandName,
         description: values.brandDescription,
-        image: values.brandImage,
-      });
-      message.success('Brand added successfully!');
+        image: imageUrl, // Lấy URL ảnh từ trạng thái
+      };
+      if (editingRecord) {
+        // Chỉnh sửa sản phẩm
+        await axios.patch(`http://localhost:5000/api/brand/${editingRecord._id}`, payload);
+        message.success("Cập nhật sản phẩm thành công!");
+      } else {
+        // Thêm sản phẩm
+        await axios.post('http://localhost:5000/api/brand/', payload);
+        message.success("Thêm sản phẩm thành công!");
+      }
       handleCancel();
     } catch (error) {
       setErrorMessage(error.response?.data.message || 'An error occurred');
     }
   };
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setImageUrl(record.image);
+    setIsModalVisible(true);
+  };
+  const confirmDelete = (id) => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa thương hiệu này?",
+      content: "Thao tác này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: () => handleDelete(id), // Gọi hàm xóa khi xác nhận
+    });
+  };
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/brand/${id}`);
+      message.success("Xóa thương hiệu thành công!");
+  
+      // Cập nhật lại danh sách sau khi xóa
+      setData((prevData) => prevData.filter((item) => item._id !== id));
+    } catch (error) {
+      message.error(error.response?.data.message || "Đã xảy ra lỗi khi xóa!");
+    }
+  };
+  const columns = [
+    {
+      title: "Logo",
+      dataIndex: "image",
+      key: "image",
+      render: (image) => image ? (<img src={image} alt="Logo" style={{ width: '40px', height: 'auto' }} />) : null,
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <a onClick={() => handleEdit(record)}>Edit</a>
+          <a onClick={() => confirmDelete(record._id)}>Delete</a>
+        </Space>
+      ),
+    },
+  ];
   // if (loading) {
   //   return <Spin size="large" />;
   // }
@@ -147,15 +183,19 @@ const AdminBrandPage = () => {
       </div>
       <Table columns={columns} dataSource={data} />;
       <Modal
-        title="Thêm thương hiệu"
+        title={editingRecord ? "Chỉnh sửa thương hiệu" : "Thêm thương hiệu"}
         visible={isModalVisible}
         onCancel={handleCancel}
-        footer={null} // You can customize the footer if needed
-        destroyOnClose // Optional: destroys the modal when it's closed
+        footer={null}
+        destroyOnClose
       >
         <Form
           layout="vertical"
           onFinish={handleSubmit}
+          initialValues={editingRecord ? {
+            brandName: editingRecord?.name,
+            brandDescription: editingRecord?.description,
+          }: undefined}
         >
           <Form.Item
             label="Tên thương hiệu"
@@ -216,9 +256,10 @@ const AdminBrandPage = () => {
             )}
           </Form.Item>
 
-          <Form.Item style={{ display: "flex", justifyContent: "center" }}>
+          <Form.Item  style={{ display: "flex", justifyContent: "center" }}>
             <Button
               type="primary"
+              htmlType="submit"
               style={{
                 borderRadius: 10,
                 border: "none",
@@ -229,7 +270,7 @@ const AdminBrandPage = () => {
                 minWidth: 180,
               }}
             >
-              Lưu
+              {editingRecord ? "Cập nhật" : "Lưu"}
             </Button>
           </Form.Item>
         </Form>
