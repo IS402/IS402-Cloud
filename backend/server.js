@@ -21,7 +21,10 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(express.json()); // Body parser
+
+ // Body parser
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 
 // Configure CORS to allow requests from the frontend server
@@ -37,6 +40,26 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/brand", brandRoutes);
 app.use("/api/user", userRoutes);
+
+
+
+app.get('/api/images/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).send('Product not found');
+
+    const images = product.images.map((img) => ({
+      data: img.data.toString('base64'), // Convert Buffer back to base64
+      contentType: img.contentType,
+    }));
+
+    res.json(images);
+  } catch (error) {
+    console.error('Error fetching images:', error.message);
+    res.status(500).json({ message: 'Failed to fetch images' });
+  }
+});
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
