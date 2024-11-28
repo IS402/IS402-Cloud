@@ -7,10 +7,7 @@ const productSchema = new mongoose.Schema({
     discountPrice: Number,
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true },
-    images: [{
-      key:String,
-      value:String
-    }],
+    images: [{ data: Buffer, contentType: String }], 
     stock: { type: Number, required: true },
     selected: {type: Boolean, default: false},
     specifications: [{
@@ -27,7 +24,7 @@ const productSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }    
-  });
+  },{ timestamps: true });
 
   
 

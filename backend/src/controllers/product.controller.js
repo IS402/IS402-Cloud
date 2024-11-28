@@ -3,6 +3,13 @@ import cloudinary from "../lib/cloudinary.js";
 import Product from "../model/product.model.js";
 import Category from "../model/category.model.js";
 import Brand from "../model/brand.model.js";
+import dotenv from 'dotenv';
+import isBase64 from 'is-base64';
+
+
+
+dotenv.config();
+
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -10,9 +17,18 @@ export const getAllProducts = async (req, res) => {
       .populate("category")
       .populate("brand")
       .sort({ name: 1 });
-    res.json({ products });
+
+    // Chuyển đổi Buffer thành base64
+    const processedProducts = products.map((product) => {
+      const images = product.images.map((img) => {
+        return `data:${img.contentType};base64,${img.data.toString("base64")}`;
+      });
+      return { ...product._doc, images }; // Trả sản phẩm kèm hình ảnh đã chuyển đổi
+    });
+
+    res.json({ products: processedProducts });
   } catch (error) {
-    console.log("Error in getAllProducts controller", error.message);
+    console.error("Error in getAllProducts controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -46,56 +62,82 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, image, category, stock, brand } = req.body;
+    const { name, description, price, images, category, stock, brand } = req.body;
 
-    // Validate req.body
-    if (!name || !description || !price || !category) {
+    // Kiểm tra dữ liệu đầu vào
+    if (!name || !description || !price || !category || !stock || !brand || !images.length) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
-    let cloudinaryResponse = null;
-
-    if (image) {
-      const timestamp = Math.floor(Date.now() / 1000);
-      const signature = cloudinary.utils.api_sign_request({
-        folder: "products",
-        timestamp,
-      }, process.env.CLOUDINARY_API_SECRET);
-
-      console.log("Signature:", signature);
-      console.log("String to sign:", `folder=products&timestamp=${timestamp}`);
-
-      try {
-        cloudinaryResponse = await cloudinary.uploader.upload(image, {
-          folder: "products",
-          timestamp,
-          signature,
-        });
-      } catch (error) {
-        console.log("Error uploading image to Cloudinary", error.message);
-        return res.status(500).json({ message: "Error uploading image" });
-      }
+    if (!images.every((img) => isBase64(img, { mimeRequired: true }))) {
+      return res.status(400).json({ message: 'Invalid image format' });
     }
 
+    const processedImages = images.map((image) => ({
+      data: Buffer.from(image.split(',')[1], 'base64'), // Convert base64 string to Buffer
+      contentType: image.split(';')[0].split(':')[1], // Extract content type (e.g., "image/jpeg")
+    }));
+    console.log("Received Images:", processedImages);
+    
+
+    // Tạo sản phẩm mới
     const product = await Product.create({
       name,
       description,
       price,
-      image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
+      images: processedImages, // Lưu mảng URL ảnh vào MongoDB
       category,
       stock,
       brand,
     });
 
-    console.log(`Product created: ${product.name}`);
-
     res.status(201).json(product);
   } catch (error) {
-    console.log("Error in createProduct controller", error.message);
+    console.error("Error in createProduct controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+export const editProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, images, category, stock, brand } = req.body;
 
+    if (!name || !description || !price || !category || !stock || !brand || !images.length) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    if (!images.every((img) => isBase64(img, { mimeRequired: true }))) {
+      return res.status(400).json({ message: 'Invalid image format' });
+    }
+
+    const processedImages = images.map((image) => ({
+      data: Buffer.from(image.split(',')[1], 'base64'),
+      contentType: image.split(';')[0].split(':')[1],
+    }));
+    console.log("Processed Images:", processedImages);
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        name,
+        description,
+        price,
+        images: processedImages,
+        category,
+        stock,
+        brand,
+      },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(updatedProduct);
+  } catch (error) {
+    console.error("Error in editProduct controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);

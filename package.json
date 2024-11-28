@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "cloudinary": "^2.5.1",
+    "is-base64": "^1.1.0",
     "react-scripts": "^5.0.1",
     "redis": "^4.7.0"
   }

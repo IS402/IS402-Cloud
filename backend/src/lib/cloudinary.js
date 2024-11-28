@@ -39,19 +39,9 @@ try {
 	);
 
 	console.log("Generated Signature:", signature);
-
-	// Example API call to validate
-	cloudinary.uploader.upload("/frontend/src/images/H3_1_daee070bf4.png", {
-		timestamp,
-		signature,
-		api_key: process.env.CLOUDINARY_API_KEY,
-	}, (error, result) => {
-		if (error) {
-			console.error("Upload Error:", error);
-		} else {
-			console.log("Upload Success:", result);
-		}
-	});
+	
+	
+	
 } catch (err) {
 	console.error("Error during signature generation or upload:", err);
 }
