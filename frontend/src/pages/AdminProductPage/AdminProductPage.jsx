@@ -20,9 +20,10 @@ const primaryColor = "#EC3C3C";
 const hoverColor = "#f65668";
 
 const AdminProductPage = () => {
+  const [form] = Form.useForm();
   const [isHovered, setIsHovered] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
+  const [editingRecord, setEditingRecord] = useState(false);
   const [images, setImages] = useState([]); // Store base64 images
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +77,9 @@ const AdminProductPage = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setEditingRecord(null);
+    setEditingRecord(false);
     setImages([]);
+    form.resetFields();
   };
 
   // Convert selected images to base64
@@ -185,6 +187,11 @@ const AdminProductPage = () => {
       key: "price",
     },
     {
+      title: "Discount price",
+      dataIndex: "discountPrice",
+      key: "discountPrice",
+    },
+    {
       title: "Stock",
       dataIndex: "stock",
       key: "stock",
@@ -203,7 +210,7 @@ const AdminProductPage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Text style={{ fontSize: "24px", fontWeight: "bold" }}>Admin Product Management</Text>
+      <Text style={{ fontSize: "24px", fontWeight: "bold" }}>Sản phẩm</Text>
       <div style={{ textAlign: "right", marginBottom: "20px" }}>
         <Button
           type="primary"
@@ -228,6 +235,7 @@ const AdminProductPage = () => {
         footer={null}
       >
         <Form
+          form={form}
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={

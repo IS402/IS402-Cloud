@@ -46,6 +46,12 @@ export const routes=[
         isAdminPage: false
     },
     {
+        path:'/product/:category',
+        page:ProductPage,
+        isShowHeader:true,
+        isAdminPage: false
+    },
+    {
         path:'/product-detail',
         page:ProductDetailPage,
         isShowHeader:true,

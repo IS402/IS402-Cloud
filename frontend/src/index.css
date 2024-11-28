@@ -151,4 +151,7 @@ html{
   border-color:#EC3C3C;
   background-color: #EC3C3C;
 }
-
+.title{
+  -webkit-line-clamp: 2 !important;
+  height: 40px !important;
+}

@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {
   Layout,
   Menu,
@@ -10,9 +10,12 @@ import {
   Collapse,
   Checkbox,
   Button,
+  message,
   Select,
   Radio
 } from "antd";
+import { useParams } from 'react-router-dom';
+import axios from "axios";
 import {MenuOutlined} from "@ant-design/icons"
 import ProductBoxComponent from "../../components/ProductBoxComponent/ProductBoxComponent";
 
@@ -91,8 +94,25 @@ const connectOptions = [
 ];
 
 const ProductPage = () => {
+  const { category } = useParams();
   const [selectedBrand, setSelectedBrand] = useState(null);
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      try {
+        console.log(category); // Kiểm tra giá trị categoryName
+        const response = await axios.get(`http://localhost:5000/api/products/category/plug/${category}`);
+        setData(response.data.products);
+        console.log(response.data.products);
+      } catch (err) {
+        message.error("Failed to load products");
+      }
+    };
 
+    if (category) {
+      fetchProductsByCategory();
+    }
+  }, [category]);
   return (
     <Content style={{ padding: "0 60px" , backgroundColor:whiteColor}}>
       <Breadcrumb style={{ margin: "16px 0", padding: "0 70px" }}>
@@ -300,9 +320,9 @@ const ProductPage = () => {
             </div>
             <Row>
               <div style={{display:'flex', justifyItems:'center', marginTop:20,marginLeft: 0,marginRight: 0, gap:10, padding:'0 0px', flexWrap: 'wrap'}}>
-              {Array.from({ length: 10 }).map((_, index) => (
-                  <ProductBoxComponent key={index} />
-                ))}
+              {data.map((product) => (
+                <ProductBoxComponent key={product._id} product={product} />
+              ))}
               </div>
             </Row>
           </Col>

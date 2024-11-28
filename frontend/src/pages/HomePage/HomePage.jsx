@@ -1,5 +1,5 @@
-import React from "react";
-import { Carousel, Row, Col, Typography } from "antd";
+import React, { useEffect, useState } from "react";
+import { Carousel, Row, Col, Typography, message } from "antd";
 import image1 from "../../images/xiaomi-14T-series-home-mo-ban.png";
 import image2 from "../../images/thu-cu-banner-390-home.png";
 import image3 from "../../images/Tặng bảo hành 12 tháng Vip.png";
@@ -9,10 +9,67 @@ import hotSales from "../../images/hot-sale-cuoi-tuan-20-03-2024.gif";
 import ProductBoxComponent from "../../components/ProductBoxComponent/ProductBoxComponent";
 import discount1 from "../../images/H3_1_daee070bf4.png"
 import discount2 from "../../images/H3_405x175_a9884857ee.png"
-import discount3 from "../../images/H3_405x175_48b1bd19d9.png"
+import discount3 from "../../images/H3_405x175_48b1bd19d9.png";
+import axios from "axios";
 
 const { Text } = Typography;
 const HomePage = () => {
+  const [discountProduct, setDiscountProduct] = useState([]);
+  const [phoneProduct, setPhoneProduct] = useState([]);
+  const [watchProduct, setWatchProduct] = useState([]);
+  const [ipadProduct, setIpadProduct] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/products/");
+        setDiscountProduct(response.data.products);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+  useEffect(() => {
+    const fetchProductsByCategory  = async (categoryName) => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/products/category/${categoryName}`);
+        setPhoneProduct(response.data.products);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchProductsByCategory ("Điện thoại");
+  }, []);
+  useEffect(() => {
+    const fetchProductsByCategory  = async (categoryName) => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/products/category/${categoryName}`);
+        setWatchProduct(response.data.products);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchProductsByCategory ("Đồng hồ");
+  }, []);
+  useEffect(() => {
+    const fetchProductsByCategory  = async (categoryName) => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/products/category/${categoryName}`);
+        setIpadProduct(response.data.products);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchProductsByCategory ("Máy tính bảng");
+  }, []);
   return (
     <div style={{ padding: "30px 100px" }}>
       <Carousel autoplay style={{ padding: "0 50px", borderRadius: 20 }}>
@@ -78,8 +135,8 @@ const HomePage = () => {
             padding: "0 10px",
           }}
         >
-          {Array.from({ length: 5 }).map((_, index) => (
-            <ProductBoxComponent key={index} />
+          {discountProduct.slice(0, 5).map((product) => (
+            <ProductBoxComponent key={product._id} product={product} />
           ))}
         </Row>
       </Row>
@@ -97,8 +154,8 @@ const HomePage = () => {
           ĐIỆN THOẠI NỔI BẬT NHẤT
         </Text>
         <div style={{display:'flex', justifyItems:'center',marginLeft: 50,marginRight: 50, gap:10, padding:'0 10px', flexWrap: 'wrap'}}>
-        {Array.from({ length: 10 }).map((_, index) => (
-            <ProductBoxComponent key={index} />
+        {phoneProduct.slice(0, 10).map((product) => (
+            <ProductBoxComponent key={product._id} product={product} />
           ))}
         </div>
       </Row>
@@ -116,8 +173,8 @@ const HomePage = () => {
           Đồng hồ thông minh
         </Text>
         <div style={{display:'flex', justifyItems:'center',marginLeft: 50,marginRight: 50, gap:10, padding:'0 10px', flexWrap: 'wrap'}}>
-        {Array.from({ length: 10 }).map((_, index) => (
-            <ProductBoxComponent key={index} />
+        {watchProduct.slice(0, 10).map((product) => (
+            <ProductBoxComponent key={product._id} product={product} />
           ))}
         </div>
       </Row>
@@ -135,8 +192,8 @@ const HomePage = () => {
           Máy tính bảng
         </Text>
         <div style={{display:'flex', justifyItems:'center',marginLeft: 50,marginRight: 50, gap:10, padding:'0 10px', flexWrap: 'wrap'}}>
-        {Array.from({ length: 10 }).map((_, index) => (
-            <ProductBoxComponent key={index} />
+        {ipadProduct.slice(0, 10).map((product) => (
+            <ProductBoxComponent key={product._id} product={product} />
           ))}
         </div>
       </Row>

@@ -5,6 +5,8 @@ import {
 	getAllProducts,
 	getFeaturedProducts,
     getProductsByBrand,
+	getProductsByCategory,
+	getProductsByCategorySlug,
 	getRecommendedProducts,
 	toggleFeaturedProduct,
 } from "../controllers/product.controller.js";
@@ -23,5 +25,7 @@ router.post("/", createProduct);
 router.patch("/:id",toggleFeaturedProduct);
 // router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 router.delete("/:id",deleteProduct);
+router.get("/category/:category",getProductsByCategory);
+router.get("/category/plug/:category",getProductsByCategorySlug);
 
 export default router;

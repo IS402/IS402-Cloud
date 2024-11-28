@@ -7,7 +7,7 @@ import love from "../../images/heart.png";
 import loveBlack from "../../images/heart_black.png";
 const { Text } = Typography;
 
-const ProductBoxComponent = () => {
+const ProductBoxComponent = ({ product }) => {
   return (
     <div
       style={{
@@ -17,38 +17,60 @@ const ProductBoxComponent = () => {
         width: 200,
         display: "flex",
         justifyContent: "center",
-        position:'relative',
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)"
+        position: "relative",
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
       }}
     >
       <a href="/">
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={image} alt="" style={{ height: 160 }} />
+            {product.images && product.images.length > 0 ? (
+            <img src={product.images[0]} alt="Product" style={{ width: "auto", height: 160 }} />
+          ) : (
+            <span>No image</span>
+          )}
         </div>
         <div>
-          <Text style={{ fontWeight: "bold" }}>
-            Samsung Galaxy S24 Ultra 12GB 256GB
-          </Text>
+          <Text className="title" style={{
+            fontWeight: "bold",
+            display: "block",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "normal",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            display: "-webkit-box",
+          }}>{product.name}</Text>
         </div>
         <div style={{ marginTop: 30 }}>
-          <Text
-            className="product-price"
-            style={{ color: "#d70018", fontWeight: "bold" }}
-          >
-            41.990.000đ
-          </Text>
-          <Text
-            className="product-price"
-            style={{
-              color: "#707070",
-              fontWeight: "bold",
-              textDecoration: "line-through",
-              marginLeft: 10,
-              fontSize:12
-            }}
-          >
-            43.990.000đ
-          </Text>
+          {product.discountPrice > 0 ? (
+            <>
+              <Text
+                className="product-price"
+                style={{ color: "#d70018", fontWeight: "bold" }}
+              >
+                {product.discountPrice}đ
+              </Text>
+              <Text
+                className="product-price"
+                style={{
+                  color: "#707070",
+                  fontWeight: "bold",
+                  textDecoration: "line-through",
+                  marginLeft: 10,
+                  fontSize: 12,
+                }}
+              >
+                {product.price}đ
+              </Text>
+            </>
+          ) : (
+            <Text
+              className="product-price"
+              style={{ color: "#d70018", fontWeight: "bold" }}
+            >
+              {product.price}đ
+            </Text>
+          )}
         </div>
         <div>
           <Text
@@ -104,12 +126,12 @@ const ProductBoxComponent = () => {
             borderRadius: 5,
             color: "#0c53b7",
             fontSize: 10,
-            fontWeight:500,
-            padding:'2px 5px',
-            position:'absolute',
-            right:'0',
-            top:'0',
-            width:'fit-content'
+            fontWeight: 500,
+            padding: "2px 5px",
+            position: "absolute",
+            right: "0",
+            top: "0",
+            width: "fit-content",
           }}
         >
           Trả góp 0%

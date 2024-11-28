@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import logo from "../../images/logo1.png";
 import truckImage from "../../images/delivery-truck.png";
+import { Link } from 'react-router-dom';
 
 const { Header } = Layout;
 const primaryColor = "#EC3C3C";
@@ -28,28 +29,28 @@ const whiteColor = "#ffffff";
 const items = [
   {
     key: "phones",
-    label: <span style={{ color: whiteColor, fontSize: 16 }}>Điện thoại</span>,
+    label: <Link to="/product/dien-thoai"style={{ color: whiteColor, fontSize: 16 }}>Điện thoại</Link>,
   },
   {
     key: "accessories",
-    label: <span style={{ color: whiteColor, fontSize: 16 }}>Phụ kiện</span>,
+    label: <Link to="/product/phu-kien" style={{ color: whiteColor, fontSize: 16 }}>Phụ kiện</Link>,
   },
   {
     key: "brands",
-    label: <span style={{ color: whiteColor, fontSize: 16 }}>Thương hiệu</span>,
+    label: <Link to="/product/brand/thuong-hieu" style={{ color: whiteColor, fontSize: 16 }}>Thương hiệu</Link>,
   },
   {
     key: "smartwatches",
     label: (
-      <span style={{ color: whiteColor, fontSize: 16 }}>
+      <Link to="/product/dong-ho"style={{ color: whiteColor, fontSize: 16 }}>
         Đồng hồ thông minh
-      </span>
+      </Link>
     ),
   },
   {
     key: "tablets",
     label: (
-      <span style={{ color: whiteColor, fontSize: 16 }}>Máy tính bảng</span>
+      <Link to="/product/may-tinh-bang" style={{ color: whiteColor, fontSize: 16 }}>Máy tính bảng</Link>
     ),
   },
 ];

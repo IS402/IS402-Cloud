@@ -62,10 +62,10 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, images, category, stock, brand } = req.body;
+    const { name, description, price, discountPrice, images, category, stock, brand } = req.body;
 
     // Kiểm tra dữ liệu đầu vào
-    if (!name || !description || !price || !category || !stock || !brand || !images.length) {
+    if (!name || !description || !price || !discountPrice || !category || !stock || !brand || !images.length) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     if (!images.every((img) => isBase64(img, { mimeRequired: true }))) {
@@ -84,6 +84,7 @@ export const createProduct = async (req, res) => {
       name,
       description,
       price,
+      discountPrice,
       images: processedImages, // Lưu mảng URL ảnh vào MongoDB
       category,
       stock,
@@ -99,9 +100,9 @@ export const createProduct = async (req, res) => {
 export const editProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, images, category, stock, brand } = req.body;
+    const { name, description, price, discountPrice, images, category, stock, brand } = req.body;
 
-    if (!name || !description || !price || !category || !stock || !brand || !images.length) {
+    if (!name || !description || !price || !discountPrice || !category || !stock || !brand || !images.length) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     if (!images.every((img) => isBase64(img, { mimeRequired: true }))) {
@@ -120,6 +121,7 @@ export const editProduct = async (req, res) => {
         name,
         description,
         price,
+        discountPrice,
         images: processedImages,
         category,
         stock,
@@ -192,8 +194,43 @@ export const getRecommendedProducts = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   const { category } = req.params;
   try {
-    const products = await Product.find({ category });
-    res.json({ products });
+    const categoryDoc = await Category.findOne({ name: category });
+    if (!categoryDoc) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    const products = await Product.find({ category: categoryDoc._id });
+
+    const processedProducts = products.map((product) => {
+      const images = product.images.map((img) => {
+        return `data:${img.contentType};base64,${img.data.toString("base64")}`;
+      });
+      return { ...product._doc, images };
+    });
+
+    res.json({ products: processedProducts });
+  } catch (error) {
+    console.log("Error in getProductsByCategory controller", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getProductsByCategorySlug = async (req, res) => {
+  const { category } = req.params;
+  try {
+    const categoryDoc = await Category.findOne({ slug: category });
+    if (!categoryDoc) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    const products = await Product.find({ category: categoryDoc._id });
+
+    const processedProducts = products.map((product) => {
+      const images = product.images.map((img) => {
+        return `data:${img.contentType};base64,${img.data.toString("base64")}`;
+      });
+      return { ...product._doc, images };
+    });
+
+    res.json({ products: processedProducts });
   } catch (error) {
     console.log("Error in getProductsByCategory controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
