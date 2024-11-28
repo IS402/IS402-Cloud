@@ -49,7 +49,7 @@ const OrderPage = () => {
   return (
     <>
       <div className="container">
-        <div className="cart">
+        {/* <div className="cart">
           <h1 className="title">Giỏ hàng</h1>
           <ul>
             {cartItems.map((item) => (
@@ -63,7 +63,7 @@ const OrderPage = () => {
               </li>
             ))}
           </ul>
-        </div>
+        </div> */}
         <div className="select">
           <h2 className="title">Sản phẩm đã chọn</h2>
           <ul>
