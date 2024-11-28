@@ -46,45 +46,48 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      price,
-      brand,
-      stock,
-      specifications,
-      images,
-      category,
-    } = req.body;
+    const { name, description, price, image, category, stock, brand } = req.body;
 
-    const uploadedImages = [];
-    if (images && images.length > 0) {
-      for (const image of images) {
-        const file = image.value;
+    // Validate req.body
+    if (!name || !description || !price || !category) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-        console.log(file);
-        const cloudinaryResponse = await cloudinary.uploader.upload(file, {
+    let cloudinaryResponse = null;
+
+    if (image) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = cloudinary.utils.api_sign_request({
+        folder: "products",
+        timestamp,
+      }, process.env.CLOUDINARY_API_SECRET);
+
+      console.log("Signature:", signature);
+      console.log("String to sign:", `folder=products&timestamp=${timestamp}`);
+
+      try {
+        cloudinaryResponse = await cloudinary.uploader.upload(image, {
           folder: "products",
+          timestamp,
+          signature,
         });
-
-        uploadedImages.push({
-          value: cloudinaryResponse.secure_url,
-          key: image.key,
-        });
+      } catch (error) {
+        console.log("Error uploading image to Cloudinary", error.message);
+        return res.status(500).json({ message: "Error uploading image" });
       }
     }
-    console.log(uploadedImages);
+
     const product = await Product.create({
       name,
       description,
       price,
-      discountPrice: req.body.discountPrice || 0,
+      image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
       category,
-      brand,
-      images: uploadedImages,
       stock,
-      specifications: specifications || [],
+      brand,
     });
+
+    console.log(`Product created: ${product.name}`);
 
     res.status(201).json(product);
   } catch (error) {
