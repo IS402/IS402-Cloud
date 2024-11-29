@@ -94,6 +94,7 @@ const AdminBrandPage = () => {
         message.success("Thêm sản phẩm thành công!");
       }
       handleCancel();
+      setData((prevData) => [...prevData, payload]);
     } catch (error) {
       setErrorMessage(error.response?.data.message || 'An error occurred');
     }

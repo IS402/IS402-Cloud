@@ -4,6 +4,7 @@ import {
 	deleteProduct,
 	getAllProducts,
 	getFeaturedProducts,
+	getProductById,
     getProductsByBrand,
 	getProductsByCategory,
 	getProductsByCategorySlug,
@@ -19,6 +20,7 @@ router.get("/",getAllProducts);
 router.get("/featured", getFeaturedProducts);
 router.get("/brand/:brand", getProductsByBrand);
 router.get("/recommendations", getRecommendedProducts);
+router.get("/:id", getProductById);
 //router.post("/", protectRoute, adminRoute, createProduct);
 router.post("/", createProduct);
 // router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);

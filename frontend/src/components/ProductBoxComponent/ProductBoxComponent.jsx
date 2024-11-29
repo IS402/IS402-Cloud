@@ -5,11 +5,20 @@ import star from "../../images/star.png";
 import starBlack from "../../images/star_black.png";
 import love from "../../images/heart.png";
 import loveBlack from "../../images/heart_black.png";
+import { Link, useNavigate } from "react-router-dom";
 const { Text } = Typography;
 
 const ProductBoxComponent = ({ product }) => {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    // navigate(`/product-detail/${product._id}`);
+  };
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN').format(amount);
+  };
   return (
     <div
+      onClick={handleClick}
       style={{
         padding: "15px 15px",
         background: "#ffffff",
@@ -19,27 +28,49 @@ const ProductBoxComponent = ({ product }) => {
         justifyContent: "center",
         position: "relative",
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+        cursor: "pointer",
       }}
     >
-      <a href="/">
-        <div style={{ display: "flex", justifyContent: "center" }}>
-            {product.images && product.images.length > 0 ? (
-            <img src={product.images[0]} alt="Product" style={{ width: "auto", height: 160 }} />
+      <Link to={`/product-detail/${product._id}`}>
+        <div style={{ display: "flex", justifyContent: "center", height:170 }}>
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0]}
+              alt="Product"
+              style={{
+                width: "160px",
+                height: 160,
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.width = "170px";
+                e.target.style.height = "170px";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.width = "160px";
+                e.target.style.height = "160px";
+              }}
+            />
           ) : (
             <span>No image</span>
           )}
         </div>
         <div>
-          <Text className="title" style={{
-            fontWeight: "bold",
-            display: "block",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "normal",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            display: "-webkit-box",
-          }}>{product.name}</Text>
+          <Text
+            className="title"
+            style={{
+              fontWeight: "bold",
+              display: "block",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "normal",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              display: "-webkit-box",
+            }}
+          >
+            {product.name}
+          </Text>
         </div>
         <div style={{ marginTop: 30 }}>
           {product.discountPrice > 0 ? (
@@ -48,7 +79,7 @@ const ProductBoxComponent = ({ product }) => {
                 className="product-price"
                 style={{ color: "#d70018", fontWeight: "bold" }}
               >
-                {product.discountPrice}đ
+                {`${formatCurrency(product.discountPrice)} ₫`}
               </Text>
               <Text
                 className="product-price"
@@ -60,7 +91,7 @@ const ProductBoxComponent = ({ product }) => {
                   fontSize: 12,
                 }}
               >
-                {product.price}đ
+                {`${formatCurrency(product.price)} ₫`}
               </Text>
             </>
           ) : (
@@ -68,7 +99,7 @@ const ProductBoxComponent = ({ product }) => {
               className="product-price"
               style={{ color: "#d70018", fontWeight: "bold" }}
             >
-              {product.price}đ
+              {`${formatCurrency(product.price)} ₫`}
             </Text>
           )}
         </div>
@@ -136,7 +167,7 @@ const ProductBoxComponent = ({ product }) => {
         >
           Trả góp 0%
         </div>
-      </a>
+      </Link>
     </div>
   );
 };

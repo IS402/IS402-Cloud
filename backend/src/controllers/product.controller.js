@@ -33,6 +33,25 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const images = product.images.map((img) => {
+      return `data:${img.contentType};base64,${img.data.toString("base64")}`;
+    });
+    const processedProducts = [{ ...product._doc, images }];
+    res.json({ products: processedProducts });
+  } catch (error) {
+    console.error("Error in getAllProducts controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 export const getFeaturedProducts = async (req, res) => {
   try {
     let featuredProducts = await redis.get("featured_products");
@@ -221,7 +240,9 @@ export const getProductsByCategorySlug = async (req, res) => {
     if (!categoryDoc) {
       return res.status(404).json({ message: "Category not found" });
     }
-    const products = await Product.find({ category: categoryDoc._id });
+    const products = await Product.find({ category: categoryDoc._id })
+    .populate("category")
+    .populate("brand");
 
     const processedProducts = products.map((product) => {
       const images = product.images.map((img) => {

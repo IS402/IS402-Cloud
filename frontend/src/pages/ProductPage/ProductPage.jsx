@@ -1,15 +1,11 @@
 import React, {useState, useEffect} from "react";
 import {
   Layout,
-  Menu,
-  theme,
   Breadcrumb,
   Row,
   Col,
   Typography,
   Collapse,
-  Checkbox,
-  Button,
   message,
   Select,
   Radio
@@ -97,13 +93,14 @@ const ProductPage = () => {
   const { category } = useParams();
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [data, setData] = useState([]);
+  const [brandData, setBrandData] = useState([]);
+  
   useEffect(() => {
     const fetchProductsByCategory = async () => {
       try {
-        console.log(category); // Kiểm tra giá trị categoryName
         const response = await axios.get(`http://localhost:5000/api/products/category/plug/${category}`);
         setData(response.data.products);
-        console.log(response.data.products);
+        // console.log(response.data.products)
       } catch (err) {
         message.error("Failed to load products");
       }
@@ -113,6 +110,28 @@ const ProductPage = () => {
       fetchProductsByCategory();
     }
   }, [category]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/brand/');
+        const data = response.data;
+        const updatedBrandData = data.map((brand) => {
+          const matchedBrand = brands.find((b) => b.name === brand.name);
+          return matchedBrand ? { ...brand, imageUrl: matchedBrand.imageUrl } : null;
+        });
+        const filteredBrandData = updatedBrandData.filter((brand) => brand !== null);
+        setBrandData(filteredBrandData);
+      } catch (err) {
+        // setError(err.message);
+        message.error('Failed to load brands');
+      }
+    };
+
+    fetchData();
+  }, []);
+  const filteredProducts = selectedBrand
+    ? data.filter(product => product.brand.name === selectedBrand)
+    : data;
   return (
     <Content style={{ padding: "0 60px" , backgroundColor:whiteColor}}>
       <Breadcrumb style={{ margin: "16px 0", padding: "0 70px" }}>
@@ -121,10 +140,11 @@ const ProductPage = () => {
       </Breadcrumb>
       <div style={{ marginTop: 50,marginLeft:50, marginRight:50,backgroundColor:whiteColor }}>
         <Row style={{ backgroundColor: whiteColor }}>
-          <Row style={{ display: "flex", gap: 10 }}>
-            {brands.map((brandName) => (
+          {category == "dien-thoai" && (
+            <Row style={{ display: "flex", gap: 10 }}>
+            {brandData.map((brand) => (
               <div
-                key={brandName.id}
+                key={brand.id}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -135,16 +155,18 @@ const ProductPage = () => {
                   padding: "10px 10px",
                   boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                 }}
+                onClick={() => setSelectedBrand(brand.name)}
               >
                 <img
-                  src={require(`../../images/brands/${brandName.imageUrl}`)}
-                  alt={brandName.name}
+                  src={require(`../../images/brands/${brand.imageUrl}`)}
+                  alt={brand.name}
                   style={{ height: 60 }}
                 />
-                <Text style={{ fontSize: 14, width:100 }}>{brandName.name}</Text>
+                <Text style={{ fontSize: 14, width:100 }}>{brand.name}</Text>
               </div>
             ))}
           </Row>
+          )}
         </Row>
         <Row style={{backgroundColor:whiteColor, marginTop:50, marginBottom:50, display:'flex',justifyContent:"space-between"}}>
           <Col span={5}>
@@ -320,7 +342,7 @@ const ProductPage = () => {
             </div>
             <Row>
               <div style={{display:'flex', justifyItems:'center', marginTop:20,marginLeft: 0,marginRight: 0, gap:10, padding:'0 0px', flexWrap: 'wrap'}}>
-              {data.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductBoxComponent key={product._id} product={product} />
               ))}
               </div>
