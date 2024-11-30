@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -12,6 +12,7 @@ import {
   Button,
   Input,
   Radio,
+  message,
 } from "antd";
 import ProductPaymentComponent from "../../components/ProductPaymentComponent/ProductPaymentComponent";
 import image from "../../images/cod.png"
@@ -23,7 +24,34 @@ const whiteColor = "#ffffff";
 const { Text } = Typography;
 const { TextArea } = Input;
 const PayMentPage = () => {
-  const [deliveryOption, setDeliveryOption] = useState("homeDelivery");
+  const [deliveryOption, setDeliveryOption] = useState("homeDelivery");  
+  const [cartData, setCartData] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(0); // Total amount state
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/cart", {
+          withCredentials: true, // Ensures cookies are sent
+        });
+        setCartData(response.data);
+        setTotalAmount(response.data?.totalAmount || 0); // Initialize total amount
+        setLoading(false);
+      } catch (error) {
+        if (error.response?.status === 401) {
+          message.warning("Vui lòng đăng nhập để xem giá tiền thanh toán");
+          navigate("/login");
+        } else {
+          message.error("Không thể tải giá tiền thanh toán");
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchCartData();
+  }, [navigate]);
 
   const onChange = (e) => {
     setDeliveryOption(e.target.value);
@@ -206,22 +234,10 @@ const PayMentPage = () => {
               >
                 <Text>Tổng tiền</Text>
                 <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                  39.000.000 đ
+                  {`${totalAmount.toLocaleString()} đ`}
                 </Text>
               </div>
-              <hr style={{ backgroundColor: "#E0E0E0 " }} />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  margin: "10px 0px",
-                }}
-              >
-                <Text>Tổng khuyến mãi</Text>
-                <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                  9.000.000 đ
-                </Text>
-              </div>
+             
               <div
                 style={{
                   display: "flex",
@@ -231,7 +247,7 @@ const PayMentPage = () => {
               >
                 <Text>Phí vận chuyển</Text>
                 <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                  39.000.000 đ
+                  50.000 đ
                 </Text>
               </div>
               <hr style={{ backgroundColor: "#E0E0E0 " }} />
@@ -246,7 +262,7 @@ const PayMentPage = () => {
                 <Text
                   style={{ color: "#EC3C3C", fontWeight: "600", fontSize: 16 }}
                 >
-                  39.000.000 đ
+                  {(totalAmount + 50000).toLocaleString()} đ
                 </Text>
               </div>
               <Button
