@@ -22,7 +22,7 @@ export const getCartProducts = async (req, res) => {
     console.error("Error in getCartProducts controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-
+};
 
 export const addToCart = async (req, res) => {
   try {
