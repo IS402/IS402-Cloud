@@ -8,10 +8,8 @@ const { Text } = Typography;
 
 const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChange }) => {
   const [loading, setLoading] = useState(false);
-
   const [quantity, setQuantity] = useState(product?.quantity || 1);
   const [base64Image, setBase64Image] = useState(null);
-  const [quantity, setQuantity] = useState(product?.quantity || 0);
   const [totalPrice, setTotalPrice] = useState((product?.product?.price || 0) * quantity);
 
   // Convert buffer to Base64 and store it
@@ -54,7 +52,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
       );
 
       setQuantity(newQuantity); // Update quantity locally
-      onQuantityChange && onQuantityChange(productId, newQuantity); // Notify parent component
+      onQuantityChange && onQuantityChange(productId, newQuantity * (product?.product?.price || 0)); // Notify parent component
       setTotalPrice(newQuantity * (product?.product?.price || 0));
     } catch (error) {
       message.error("Không thể cập nhật số lượng");
@@ -89,7 +87,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
         padding: "20px 20px",
       }}
     >
-      <Checkbox />
+      <Checkbox style={{flex:1}}/>
       <Col
         style={{
           padding: "5px 1px",
@@ -103,6 +101,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
           height: 80,
           cursor: "pointer",
           justifyContent: "center",
+          flex:1
         }}
       >
         {base64Image ? (
@@ -115,13 +114,14 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
           <span>No image</span>
         )}
       </Col>
-      <Text style={{ fontWeight: "500", fontSize: 16 }}>
+      <Text style={{ fontWeight: "500", fontSize: 16, flex:3 }}>
         {product?.product?.name || "Tên sản phẩm"}
       </Text>
       <div
         style={{
           display: "flex",
           gap: 20,
+          flex:4,
           alignItems: "center",
           marginLeft: 100,
         }}
@@ -179,7 +179,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
           />
         </div>
       </div>
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center",flex:1 }}>
         <DeleteOutlined
           style={{ fontSize: 20 }}
           onClick={() => !loading && handleDelete(product?.product?._id)}

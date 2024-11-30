@@ -71,7 +71,7 @@ const CartPage = () => {
     // Recalculate the total amount
     const updatedItems = cartData.items.map((item) =>
       item.product._id === productId
-        ? { ...item, total: productTotal }
+        ? { ...item, quantity: productTotal / item.product.price } // Cập nhật lại số lượng dựa vào tổng giá trị
         : item
     );
 
@@ -79,7 +79,8 @@ const CartPage = () => {
       (sum, item) => sum + item.quantity * item.product.price,
       0
     );
-
+    console.log(newTotalAmount)
+    setCartData({ ...cartData, items: updatedItems });
     setTotalAmount(newTotalAmount);
   };
 
