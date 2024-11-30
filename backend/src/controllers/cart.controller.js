@@ -9,7 +9,7 @@ export const getCartProducts = async (req, res) => {
 			const item = req.user.cartItems.find((cartItem) => cartItem.id === product.id);
 			return { ...product.toJSON(), quantity: item.quantity };
 		});
-
+		console.log(req.user.cartItems)
 		res.json(cartItems);
 	} catch (error) {
 		console.log("Error in getCartProducts controller", error.message);

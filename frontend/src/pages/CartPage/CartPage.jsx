@@ -11,6 +11,7 @@ import {
   Checkbox,
   Typography,
   Button,
+  message
 } from "antd";
 import ProductCartComponent from "../../components/ProductCartComponent/ProductCartComponent";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -19,9 +20,20 @@ const { Content, Sider } = Layout;
 const whiteColor = "#ffffff";
 const { Text } = Typography;
 const CartPage = () => {
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/cart/");
+        setData(response.data);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        // setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <Content style={{ padding: "0 60px" }}>
       <Breadcrumb style={{ margin: "16px 0", padding: "0 70px" }}>
@@ -66,10 +78,9 @@ const CartPage = () => {
               </div>
               <DeleteOutlined style={{ fontSize: 20 }} />
             </div>
-            <ProductCartComponent />
-            <ProductCartComponent />
-            <ProductCartComponent />
-            <ProductCartComponent />
+              {data.map((product) => (
+              <ProductCartComponent key={product._id} product={product} />
+            ))}
           </Col>
           <Col span={8}>
             <div

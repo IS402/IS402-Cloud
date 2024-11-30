@@ -88,7 +88,9 @@ const HeaderComponent = () => {
       message.error('Đăng xuất thất bại');
     }
   };
-
+  const handleCart = () =>{
+    navigate('/cart');
+  }
   const menu = (
     <Menu
       items={[
@@ -171,6 +173,7 @@ const HeaderComponent = () => {
 
           <Button
             type="primary"
+            onClick={handleCart}
             onMouseEnter={() => setIsCartHovered(true)}
             onMouseLeave={() => setIsCartHovered(false)}
             icon={<ShoppingCartOutlined />}
