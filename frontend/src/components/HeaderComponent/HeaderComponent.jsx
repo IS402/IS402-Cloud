@@ -141,7 +141,7 @@ const HeaderComponent = () => {
             placeholder="Bạn tìm gì..."
             prefix={<SearchOutlined />}
             style={{
-              width: 420,
+              width: 380,
               border: "none",
               padding: 5,
               borderRadius: 20,
@@ -200,7 +200,14 @@ const HeaderComponent = () => {
               boxShadow: "none",
               backgroundColor: isLoginHovered ? hoverColor : primaryColor,
               fontSize: 16,
-              marginLeft: 10
+              marginLeft: 10,
+              maxWidth:180,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+              textAlign: "left",
+              display:'flex',
+              justifyContent:'flex-start'
             }}
           >
             {loading ? 'Loading...' : user ? user.email : 'Đăng nhập'}

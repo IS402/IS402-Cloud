@@ -3,8 +3,9 @@ import User from "../model/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
 	try {
-	  const accessToken = req.cookies.accessToken;
-  
+	  const accessToken = req.cookies.token;
+	//   console.log("Cookies from client:", req.cookies);
+	//   console.log("Access Token from cookies:", req.cookies.token);
 	  if (!accessToken) {
 		return res.status(401).json({ message: "Unauthorized - No access token provided" });
 	  }
@@ -16,7 +17,7 @@ export const protectRoute = async (req, res, next) => {
 		if (!user) {
 		  return res.status(401).json({ message: "User not found" });
 		}
-  
+		// console.log("Cookies from client:", accessToken);
 		req.user = user;
 		next();
 	  } catch (error) {
