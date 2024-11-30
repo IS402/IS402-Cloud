@@ -1,51 +1,62 @@
-import React, {useEffect} from "react";
-import { Checkbox, Col, Typography } from "antd";
+
+import React, { useState } from "react";
+import { Checkbox, Col, Typography, message } from "antd";
+
 import { PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
+import axios from "axios";
 
 const whiteColor = "#ffffff";
 const { Text } = Typography;
 
 const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
-  const renderImage = (images) => {
-    if (!images || images.length === 0) {
-      return <span>No image</span>;
+  const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(product?.quantity || 0);
+
+  const handleQuantityChange = async (productId, newQuantity) => {
+    if (newQuantity < 1) {
+      message.warning("Số lượng tối thiểu là 1");
+      return;
     }
 
-    // Handle base64 image data
-    if (images[0].data) {
-      const base64String = Buffer.from(images[0].data).toString('base64');
-      const contentType = images[0].contentType;
-      return (
-        <img
-          src={`data:${contentType};base64,${base64String}`}
-          alt={product?.product?.name || "Product"}
-          style={{ 
-            height: 60, 
-            width: '100%',
-            objectFit: "cover",
-            borderRadius: 6 
-          }}
-        />
+    if (newQuantity > product?.product?.stock) {
+      message.warning("Số lượng vượt quá hàng tồn kho");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.put(
+        `http://localhost:5000/api/cart/update-quantity`,
+        {
+          productId,
+          quantity: newQuantity,
+        },
+        { withCredentials: true }
       );
-    }
 
-    // Handle regular image URLs
-    return (
-      <img
-        src={images[0]}
-        alt={product?.product?.name || "Product"}
-        style={{ 
-          height: 60, 
-          width: '100%',
-          objectFit: "cover",
-          borderRadius: 6 
-        }}
-      />
-    );
+      setQuantity(newQuantity); // Update quantity locally
+      onQuantityChange && onQuantityChange(productId, newQuantity); // Notify parent component
+    } catch (error) {
+      message.error("Không thể cập nhật số lượng");
+    } finally {
+      setLoading(false);
+    }
   };
-  useEffect(() => {
-    console.log(product.product.images[0])
-  })
+
+  const handleDelete = async (productId) => {
+    setLoading(true);
+    try {
+      await axios.delete(`http://localhost:5000/api/cart/remove/${productId}`, {
+        withCredentials: true,
+      });
+      onDelete && onDelete(productId);
+      message.success("Đã xóa sản phẩm khỏi giỏ hàng");
+    } catch (error) {
+      message.error("Không thể xóa sản phẩm");
+    } finally {
+      setLoading(false);
+    }
+  };
   const bufferData = product.product.images[0].data.data; // Dữ liệu Buffer
   const base64Image = `data:${product.product.images[0].contentType};base64,${Buffer.from(bufferData).toString('base64')}`;
   return (
@@ -114,8 +125,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               justifyContent: "center",
             }}
             onClick={() =>
-              onQuantityChange &&
-              onQuantityChange(product?.product?._id, product?.quantity - 1)
+              !loading && handleQuantityChange(product?.product?._id, quantity - 1)
             }
           />
           <div
@@ -128,7 +138,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               justifyContent: "center",
             }}
           >
-            <Text>{product?.quantity || 0}</Text>
+            <Text>{quantity}</Text>
           </div>
           <PlusOutlined
             style={{
@@ -142,8 +152,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               justifyContent: "center",
             }}
             onClick={() =>
-              onQuantityChange &&
-              onQuantityChange(product?.product?._id, product?.quantity + 1)
+              !loading && handleQuantityChange(product?.product?._id, quantity + 1)
             }
           />
         </div>
@@ -151,7 +160,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <DeleteOutlined
           style={{ fontSize: 20 }}
-          onClick={() => onDelete && onDelete(product?.product?._id)}
+          onClick={() => !loading && handleDelete(product?.product?._id)}
         />
       </div>
     </div>
