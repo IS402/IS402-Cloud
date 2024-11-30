@@ -11,10 +11,19 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const onFinish = async (values) => {
     try {
+      console.log('Login attempt with:', values);
+
       const response = await axios.post('http://localhost:5000/auth/login', {
         email: values.email,
         password: values.password,
+      },
+      {
+        withCredentials: true, // Important for cookies
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      console.log('Login response:', response.data);
       message.success('Login successful!');
       if (response.data.role === 'admin') {
         navigate('/admin/brand');
@@ -22,6 +31,7 @@ const LoginPage = () => {
         navigate('/home');
       }
     } catch (error) {
+      console.error('Login error:', error.response?.data);
       setErrorMessage(error.response?.data.message || 'An error occurred');
     }
   };
@@ -41,7 +51,7 @@ const LoginPage = () => {
           name="email"
           rules={[{ required: true, message: 'Vui lòng nhập tài khoản!' }]}
         >
-          <Input prefix={<UserOutlined />} placeholder="Tài khoản" />
+          <Input prefix={<UserOutlined />} placeholder="Email" />
         </Form.Item>
 
         <Form.Item

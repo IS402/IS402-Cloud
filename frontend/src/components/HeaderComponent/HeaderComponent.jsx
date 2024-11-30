@@ -1,24 +1,16 @@
-import React, { useEffect, useState } from "react";
-import {
-  Layout,
-  Menu,
-  Input,
-  Button,
-  Dropdown,
-  Row,
-  message
-} from "antd";
-import {
+import React, { useState, useEffect } from 'react';
+import { Layout, Row, Menu, Button, Input, Dropdown, message } from 'antd';
+import { 
+  UserOutlined, 
+  ShoppingCartOutlined, 
   SearchOutlined,
-  UserOutlined,
-  ShoppingCartOutlined,
-  RightOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  RightOutlined 
 } from "@ant-design/icons";
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUserStore } from '../../stores/useUserStore';
 import logo from "../../images/logo1.png";
 import truckImage from "../../images/delivery-truck.png";
-import { Link } from 'react-router-dom';
 
 const { Header } = Layout;
 const primaryColor = "#EC3C3C";
@@ -29,20 +21,32 @@ const whiteColor = "#ffffff";
 const items = [
   {
     key: "phones",
-    label: <Link to="/product/dien-thoai"style={{ color: whiteColor, fontSize: 16 }}>Điện thoại</Link>,
+    label: (
+      <Link to="/product/dien-thoai" style={{ color: whiteColor, fontSize: 16 }}>
+        Điện thoại
+      </Link>
+    ),
   },
   {
     key: "accessories",
-    label: <Link to="/product/phu-kien" style={{ color: whiteColor, fontSize: 16 }}>Phụ kiện</Link>,
+    label: (
+      <Link to="/product/phu-kien" style={{ color: whiteColor, fontSize: 16 }}>
+        Phụ kiện
+      </Link>
+    ),
   },
   {
     key: "brands",
-    label: <Link to="/product/brand/thuong-hieu" style={{ color: whiteColor, fontSize: 16 }}>Thương hiệu</Link>,
+    label: (
+      <Link to="/product/brand/thuong-hieu" style={{ color: whiteColor, fontSize: 16 }}>
+        Thương hiệu
+      </Link>
+    ),
   },
   {
     key: "smartwatches",
     label: (
-      <Link to="/product/dong-ho"style={{ color: whiteColor, fontSize: 16 }}>
+      <Link to="/product/dong-ho" style={{ color: whiteColor, fontSize: 16 }}>
         Đồng hồ thông minh
       </Link>
     ),
@@ -50,69 +54,71 @@ const items = [
   {
     key: "tablets",
     label: (
-      <Link to="/product/may-tinh-bang" style={{ color: whiteColor, fontSize: 16 }}>Máy tính bảng</Link>
+      <Link to="/product/may-tinh-bang" style={{ color: whiteColor, fontSize: 16 }}>
+        Máy tính bảng
+      </Link>
     ),
   },
 ];
+
 const HeaderComponent = () => {
+  const navigate = useNavigate();
   const [isLoginHovered, setIsLoginHovered] = useState(false);
   const [isCartHovered, setIsCartHovered] = useState(false);
   const [isInvoiceHovered, setIsInvoiceHovered] = useState(false);
+  
+  const { user, logout, checkAuth, loading } = useUserStore();
 
-  // const [user, setUser] = useState(null);
-  const [userEmail, setUserEmail] = useState(null);
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/auth/check-login', { withCredentials: true });
-        setUserEmail(response.data.email); // Lấy email nếu đăng nhập thành công
-      } catch (error) {
-        console.log("User is not logged in", error.response?.data.message);
-        setUserEmail(null); // Nếu chưa đăng nhập
-      }
-    };
-    checkLoginStatus();
+    checkAuth();
   }, []);
+
+  const handleLoginClick = () => {
+    if (!user) {
+      navigate('/login');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      message.success('Đăng xuất thành công');
+      navigate('/home');
+    } catch (error) {
+      message.error('Đăng xuất thất bại');
+    }
+  };
+
   const menu = (
     <Menu
       items={[
-        {
-          key: "1",
-          label: "Hà Nội",
-        },
-        {
-          key: "2",
-          label: "Đà Nẵng",
-        },
-        {
-          key: "3",
-          label: "Hồ Chí Minh",
-        },
+        { key: "1", label: "Hà Nội" },
+        { key: "2", label: "Đà Nẵng" },
+        { key: "3", label: "Hồ Chí Minh" },
       ]}
     />
   );
+
   return (
     <Layout>
-      <Header
-        style={{ padding: 0, backgroundColor: primaryColor, height: "auto" }}
-      >
+      <Header style={{ padding: 0, backgroundColor: primaryColor, height: "auto" }}>
         <Row
           style={{
             display: "flex",
             alignItems: "center",
             backgroundColor: primaryColor,
-            paddingTop: 10,
-            paddingBottom: 10,
-            paddingLeft: 100,
-            paddingRight: 100,
+            padding: "10px 100px",
           }}
         >
           <div
             className="demo-logo"
-            style={{ marginRight: "20px", display: "flex", width: "150px", justifyContent:'center'}}
+            style={{ marginRight: 20, display: "flex", width: 150, justifyContent: "center" }}
           >
-            <a href="/home" style={{height:40}}><img src={logo} alt="Logo" style={{ height: "40px" }} /></a>
+            <Link to="/home" style={{ height: 40 }}>
+              <img src={logo} alt="Logo" style={{ height: 40 }} />
+            </Link>
           </div>
+
           <Dropdown overlay={menu} trigger={["click"]}>
             <Button
               type="primary"
@@ -123,17 +129,14 @@ const HeaderComponent = () => {
                 height: 35,
                 boxShadow: "none",
                 backgroundColor: lightColor,
-                textAlign: "left",
                 fontSize: 16,
-                display: "flex",
                 marginLeft: 20,
-                justifyContent: "space-between",
-                width: 180,
               }}
             >
               Hồ Chí Minh <RightOutlined />
             </Button>
           </Dropdown>
+
           <Input
             placeholder="Bạn tìm gì..."
             prefix={<SearchOutlined />}
@@ -144,21 +147,15 @@ const HeaderComponent = () => {
               borderRadius: 20,
               paddingLeft: 10,
               height: 35,
-              marginRight: "10px",
-              marginLeft: 20,
+              margin: "0 10px 0 20px",
             }}
           />
+
           <Button
             type="primary"
             onMouseEnter={() => setIsInvoiceHovered(true)}
             onMouseLeave={() => setIsInvoiceHovered(false)}
-            icon={
-              <img
-                src={truckImage}
-                alt="icon"
-                style={{ width: 25, height: 25 }}
-              />
-            }
+            icon={<img src={truckImage} alt="icon" style={{ width: 25, height: 25 }} />}
             style={{
               borderRadius: 20,
               border: "none",
@@ -171,6 +168,7 @@ const HeaderComponent = () => {
           >
             Tra cứu đơn hàng
           </Button>
+
           <Button
             type="primary"
             onMouseEnter={() => setIsCartHovered(true)}
@@ -188,9 +186,10 @@ const HeaderComponent = () => {
           >
             Giỏ hàng
           </Button>
-          {userEmail ? (
-            <Button
+
+          <Button
             type="primary"
+            onClick={user ? handleLogout : handleLoginClick}
             onMouseEnter={() => setIsLoginHovered(true)}
             onMouseLeave={() => setIsLoginHovered(false)}
             icon={<UserOutlined />}
@@ -201,29 +200,13 @@ const HeaderComponent = () => {
               boxShadow: "none",
               backgroundColor: isLoginHovered ? hoverColor : primaryColor,
               fontSize: 16,
+              marginLeft: 10
             }}
           >
-            {userEmail}
+            {loading ? 'Loading...' : user ? user.email : 'Đăng nhập'}
           </Button>
-          ) : (
-            <Button
-            type="primary"
-            onMouseEnter={() => setIsLoginHovered(true)}
-            onMouseLeave={() => setIsLoginHovered(false)}
-            icon={<UserOutlined />}
-            style={{
-              borderRadius: 20,
-              border: "none",
-              height: 35,
-              boxShadow: "none",
-              backgroundColor: isLoginHovered ? hoverColor : primaryColor,
-              fontSize: 16,
-            }}
-          >
-            Đăng nhập
-          </Button>
-          )}
-            </Row>
+        </Row>
+
         <Row
           style={{
             display: "flex",
