@@ -16,6 +16,7 @@ const ProductBoxComponent = ({ product }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN').format(amount);
   };
+
   return (
     <div
       onClick={handleClick}
