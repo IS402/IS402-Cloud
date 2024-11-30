@@ -11,7 +11,6 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
 
   const [quantity, setQuantity] = useState(product?.quantity || 1);
   const [base64Image, setBase64Image] = useState(null);
-  const [quantity, setQuantity] = useState(product?.quantity || 0);
   const [totalPrice, setTotalPrice] = useState((product?.product?.price || 0) * quantity);
 
   // Convert buffer to Base64 and store it
