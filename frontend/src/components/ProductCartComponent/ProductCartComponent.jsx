@@ -8,8 +8,11 @@ const { Text } = Typography;
 
 const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChange }) => {
   const [loading, setLoading] = useState(false);
+
   const [quantity, setQuantity] = useState(product?.quantity || 1);
   const [base64Image, setBase64Image] = useState(null);
+  const [quantity, setQuantity] = useState(product?.quantity || 0);
+  const [totalPrice, setTotalPrice] = useState((product?.product?.price || 0) * quantity);
 
   // Convert buffer to Base64 and store it
   useEffect(() => {
@@ -26,6 +29,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
     const productTotal = quantity * product?.product?.price || 0;
     onTotalChange && onTotalChange(product?.product?._id, productTotal);
   }, [quantity, product, onTotalChange]);
+
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity < 1) {
@@ -51,6 +55,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
 
       setQuantity(newQuantity); // Update quantity locally
       onQuantityChange && onQuantityChange(productId, newQuantity); // Notify parent component
+      setTotalPrice(newQuantity * (product?.product?.price || 0));
     } catch (error) {
       message.error("Không thể cập nhật số lượng");
     } finally {
@@ -123,7 +128,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChan
       >
         <div>
           <Text style={{ color: "#EC3C3C", fontWeight: "500" }}>
-            {`${(product?.product?.price || 0).toLocaleString()} đ`}
+          {`${totalPrice.toLocaleString()} đ`}
           </Text>
         </div>
         <div style={{ display: "flex" }}>
