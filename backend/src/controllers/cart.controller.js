@@ -2,6 +2,7 @@ import Product from "../model/product.model.js";
 import Cart from "../model/cart.model.js";
 
 export const getCartProducts = async (req, res) => {
+
   try {
     const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
 
@@ -21,7 +22,7 @@ export const getCartProducts = async (req, res) => {
     console.error("Error in getCartProducts controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-};
+
 
 export const addToCart = async (req, res) => {
   try {

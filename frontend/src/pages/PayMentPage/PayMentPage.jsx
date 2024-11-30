@@ -63,27 +63,6 @@ const PayMentPage = () => {
                 flexDirection: "column",
                 boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                 borderRadius: 10,
-              }}
-            >
-              <div
-                style={{
-                  padding: "10px 10px",
-                  fontSize: 18,
-                  fontWeight: "600",
-                }}
-              >
-                Sản phẩm trong đơn (2)
-              </div>
-              <ProductPaymentComponent />
-              <ProductPaymentComponent />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 5,
-                flexDirection: "column",
-                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-                borderRadius: 10,
                 padding: "10px 15px",
               }}
             >
