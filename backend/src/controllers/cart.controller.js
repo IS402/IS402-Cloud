@@ -76,35 +76,79 @@ export const addToCart = async (req, res) => {
   }
 };
 
-export const removeAllFromCart = async (req, res) => {
+export const removeFromCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user._id });
+    const { productId } = req.params;
+
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
 
+    // Remove item
+    cart.items = cart.items.filter(
+      (item) => item.product.toString() !== productId
+    );
+
+    // Recalculate total
+    cart.totalAmount = cart.items.reduce(
+      (total, item) => total + item.quantity * item.price,
+      0
+    );
+
+    await cart.save();
+
+    res.json({
+      items: cart.items,
+      totalAmount: cart.totalAmount
+    });
+
+  } catch (error) {
+    console.error("Error removing from cart:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const removeAllFromCart = async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ user: req.user._id });
+    
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Clear all items
     cart.items = [];
     cart.totalAmount = 0;
 
     await cart.save();
 
-    res.status(200).json({ message: "Cart cleared successfully" });
+    res.json({
+      message: "Cart cleared successfully",
+      items: [],
+      totalAmount: 0
+    });
+
   } catch (error) {
-    console.error("Error in removeAllFromCart controller:", error.message);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error clearing cart:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 export const updateQuantity = async (req, res) => {
   try {
-    const { productId } = req.params;
-    const { quantity } = req.body;
+    const { productId, quantity } = req.body;
 
-    if (quantity < 0) {
-      return res.status(400).json({ message: "Quantity cannot be negative" });
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
     }
 
-    const cart = await Cart.findOne({ user: req.user._id });
+    // Validate quantity
+    if (quantity < 0) {
+      return res.status(400).json({ message: "Invalid quantity" });
+    }
+
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
@@ -117,17 +161,29 @@ export const updateQuantity = async (req, res) => {
       return res.status(404).json({ message: "Product not found in cart" });
     }
 
+    // Get product details for stock check
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check stock
+    if (quantity > product.stock) {
+      return res.status(400).json({ message: "Quantity exceeds available stock" });
+    }
+
     if (quantity === 0) {
-      // Remove the item if quantity is set to 0
+      // Remove item
       cart.items = cart.items.filter(
         (item) => item.product.toString() !== productId
       );
     } else {
-      // Update the quantity
+      // Update quantity and price
       item.quantity = quantity;
+      item.price = product.price;
     }
 
-    // Update the total amount
+    // Recalculate total
     cart.totalAmount = cart.items.reduce(
       (total, item) => total + item.quantity * item.price,
       0
@@ -135,12 +191,13 @@ export const updateQuantity = async (req, res) => {
 
     await cart.save();
 
-    res.status(200).json({
-      cartItems: cart.items,
-      totalAmount: cart.totalAmount,
+    res.json({
+      items: cart.items,
+      totalAmount: cart.totalAmount
     });
+
   } catch (error) {
-    console.error("Error in updateQuantity controller:", error.message);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error updating cart:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
