@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Checkbox, Col, Typography, message } from "antd";
 import { PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -40,7 +40,11 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
       setLoading(false);
     }
   };
-
+  useEffect(() => {
+    console.log(product.product.images[0])
+  })
+  const bufferData = product.product.images[0].data.data; // Dữ liệu Buffer
+  const base64Image = `data:${product.product.images[0].contentType};base64,${Buffer.from(bufferData).toString('base64')}`;
   const handleDelete = async (productId) => {
     setLoading(true);
     try {
