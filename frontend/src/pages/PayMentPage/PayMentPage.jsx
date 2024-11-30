@@ -201,17 +201,7 @@ const PayMentPage = () => {
                 <Checkbox/>
                 <img src={image} alt="" style={{height:40}}/>
                 <Text>Thanh toán khi nhận hàng</Text>
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:10, marginTop:10}}>
-                <Checkbox/>
-                <img src={momo} alt="" style={{height:40}}/>
-                <Text>Thanh toán bằng ví MoMo</Text>
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:10, marginTop:10}}>
-                <Checkbox/>
-                <img src={zalopay} alt="" style={{height:40}}/>
-                <Text>Thanh toán bằng ví ZaloPay</Text>
-              </div>
+              </div>              
             </div>
           </Col>
           <Col span={8}>
