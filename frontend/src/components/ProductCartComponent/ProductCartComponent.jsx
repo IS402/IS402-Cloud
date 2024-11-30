@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { Checkbox, Col, Typography } from "antd";
 import { PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
 
@@ -43,6 +43,11 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
       />
     );
   };
+  useEffect(() => {
+    console.log(product.product.images[0])
+  })
+  const bufferData = product.product.images[0].data.data; // Dữ liệu Buffer
+  const base64Image = `data:${product.product.images[0].contentType};base64,${Buffer.from(bufferData).toString('base64')}`;
   return (
     <div
       style={{
@@ -67,11 +72,12 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
           width: 80,
           height: 80,
           cursor: "pointer",
+          justifyContent:'center'
         }}
       >
         {product?.product?.images && product.product.images.length > 0 ? (
           <img
-            src={product.product.images[0]}
+            src={base64Image}
             alt={product?.product?.name || "Product"}
             style={{ height: 60, objectFit: "cover" }}
           />
