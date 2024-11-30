@@ -13,6 +13,7 @@ import AdminUserPage from "../pages/AdminUserPage/AdminUserPage.jsx"
 import AdminOrderPage from "../pages/AdminOrderPage/AdminOrderPage.jsx"
 import AdminCategoryPage from "../pages/AdminCategoryPage/AdminCategoryPage.jsx"
 import AdminChartPage from "../pages/AdminChartPage/AdminChartPage.jsx"
+import ThankYouPage from "../pages/ThankYouPage/ThankYouPage.jsx"
 
 export const routes=[
     {
@@ -116,6 +117,12 @@ export const routes=[
         page: AdminChartPage,
         isShowHeader:false,
         isAdminPage: true
+    },
+    {
+        path:'/thankyou',
+        page: ThankYouPage,
+        isShowHeader:true,
+        isAdminPage: false
     },
     {
         path:'*',

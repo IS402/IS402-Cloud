@@ -1,35 +1,41 @@
-import React from 'react'
-import { Space, Table, Tag, Typography } from 'antd';
+import React, {useEffect, useState} from 'react'
+import { Space, Table, Tag, Typography, message } from 'antd';
+import axios from "axios";
 
 const {Text}=Typography;
 
-const columns = [
+const AdminOrderPage = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const columns = [
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
       render: (text) => <a>{text}</a>,
     },
     {
-      title: 'Age',
-      dataIndex: 'age',
-      key: 'age',
+      title: 'Total amount',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
     },
     {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
+      title: 'Shipping address',
+      dataIndex: 'shippingAddress',
+      key: 'shippingAddress',
     },
     {
-      title: 'Tags',
-      key: 'tags',
-      dataIndex: 'tags',
+      title: 'Payment status',
+      key: 'paymentStatus',
+      dataIndex: 'paymentStatus',
       render: (_, { tags }) => (
         <>
           {tags.map((tag) => {
-            let color = tag.length > 5 ? 'geekblue' : 'green';
-            if (tag === 'loser') {
+            let color = 'orange';
+            if (tag === 'failed') {
               color = 'volcano';
+            }else if(tag === 'completed'){
+              color = 'green';
             }
             return (
               <Tag color={color} key={tag}>
@@ -41,40 +47,58 @@ const columns = [
       ),
     },
     {
+      title: 'Order status',
+      dataIndex: 'shippingAddress',
+      key: 'shippingAddress',
+      render: (_, { tags }) => (
+        <>
+          {tags.map((tag) => {
+            let color = 'orange';
+            if (tag === 'cancelled') {
+              color = 'volcano';
+            }else if(tag === 'delivered'){
+              color = 'green';
+            }else if(tag === 'shipped'){
+              color = 'blue'
+            }
+            return (
+              <Tag color={color} key={tag}>
+                {tag.toUpperCase()}
+              </Tag>
+            );
+          })}
+        </>
+      ),
+    },
+    {
+      title: 'Order date',
+      dataIndex: 'orderDate',
+      key: 'orderDate',
+    },
+    {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
-          <a>Edit</a>
-          <a>Delete</a>
+          <a>Confirm</a>
+          <a>Cancel</a>
         </Space>
       ),
     },
   ];
-  const data = [
-    {
-      key: '1',
-      name: 'John Brown',
-      age: 32,
-      address: 'New York No. 1 Lake Park',
-      tags: ['nice', 'developer'],
-    },
-    {
-      key: '2',
-      name: 'Jim Green',
-      age: 42,
-      address: 'London No. 1 Lake Park',
-      tags: ['loser'],
-    },
-    {
-      key: '3',
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sydney No. 1 Lake Park',
-      tags: ['cool', 'teacher'],
-    },
-  ];
-const AdminOrderPage = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/order/");
+        setData(response.data);
+      } catch (err) {
+        message.error("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <div style={{display:'flex', rowGap:20, flexDirection:'column'}}>
         <Text style={{fontSize:20, fontWeight:'bold'}}>Đơn hàng</Text>
