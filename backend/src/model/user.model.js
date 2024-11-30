@@ -19,7 +19,13 @@ const userSchema = new mongoose.Schema({
     phoneNumber: String,
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     createdAt: { type: Date, default: Date.now },
-    lastLogin: Date
+    lastLogin: Date,
+    cartItems: [
+      {
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        quantity: { type: Number, default: 1 },
+      },
+    ],
   });
 
   // Pre-save hook to hash password before saving to database

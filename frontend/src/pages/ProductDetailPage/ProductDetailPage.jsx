@@ -19,12 +19,18 @@ import { Link } from "react-router-dom";
 import ProductBoxComponent from "../../components/ProductBoxComponent/ProductBoxComponent";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { useUserStore } from "../../stores/useUserStore";
+import { useNavigate } from "react-router-dom";
 const { Content, Sider } = Layout;
 const { Text } = Typography;
 
 const whiteColor = "#ffffff";
+
+
 const ProductDetailPage = () => {
+  const user = useUserStore((state) => state.user);
   const { id } = useParams();
+  const navigate = useNavigate();
   const [discountProduct, setDiscountProduct] = useState([]);
   const [selectedStorage, setSelectedStorage] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
@@ -82,6 +88,30 @@ const ProductDetailPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      message.warning("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      navigate("/login");
+      return;
+    }
+  
+    try {
+      await axios.post(
+        "http://localhost:5000/api/cart/",
+        {
+          productId: data._id,
+          quantity: 1,
+        },
+        { withCredentials: true }
+      );
+      message.success("Đã thêm vào giỏ hàng");
+    } catch (error) {
+      message.error("Không thể thêm vào giỏ hàng");
+      console.error(error);
+    }
+  };
+  
   return (
     <Content style={{ padding: "0 60px" }}>
       <Breadcrumb style={{ margin: "16px 0", padding: "0 70px" }}>
@@ -654,6 +684,7 @@ const ProductDetailPage = () => {
                   justifyContent: "center",
                   alignItem: "center",
                 }}
+                onClick={handleAddToCart}
               >
                 <img src={cart} alt="" style={{ height: 30 }} />
               </Button>
