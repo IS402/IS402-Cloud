@@ -11,6 +11,7 @@ const { Text } = Typography;
 const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(product?.quantity || 0);
+  const [totalPrice, setTotalPrice] = useState((product?.product?.price || 0) * quantity);
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity < 1) {
@@ -36,6 +37,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
 
       setQuantity(newQuantity); // Update quantity locally
       onQuantityChange && onQuantityChange(productId, newQuantity); // Notify parent component
+      setTotalPrice(newQuantity * (product?.product?.price || 0));
     } catch (error) {
       message.error("Không thể cập nhật số lượng");
     } finally {
@@ -109,7 +111,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
       >
         <div>
           <Text style={{ color: "#EC3C3C", fontWeight: "500" }}>
-            {`${(product?.product?.price || 0).toLocaleString()} đ`}
+          {`${totalPrice.toLocaleString()} đ`}
           </Text>
         </div>
         <div style={{ display: "flex" }}>
