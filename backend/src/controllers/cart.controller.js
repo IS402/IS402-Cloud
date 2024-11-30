@@ -1,99 +1,145 @@
 import Product from "../model/product.model.js";
+import Cart from "../model/cart.model.js";
 
 export const getCartProducts = async (req, res) => {
-	try {
-		const products = await Product.find({ _id: { $in: req.user.cartItems } });
+  try {
+    const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
 
-		// add quantity for each product
-		const cartItems = products.map((product) => {
-			const item = req.user.cartItems.find((cartItem) => cartItem.id === product.id);
-			return { ...product.toJSON(), quantity: item.quantity };
-		});
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
 
-		res.json(cartItems);
-	} catch (error) {
-		console.log("Error in getCartProducts controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
+    res.status(200).json({
+      items: cart.items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      totalAmount: cart.totalAmount,
+    });
+  } catch (error) {
+    console.error("Error in getCartProducts controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 export const addToCart = async (req, res) => {
-	try {
-	  const { productId } = req.body; // Extract the productId from the request body
-	  const user = req.user; // Retrieve the authenticated user from the request
-  
-	  if (!productId) {
-		return res.status(400).json({ message: "Product ID is required" });
-	  }
-  
-	  // Ensure the user has either "user" or "admin" role
-	  if (!["user", "admin"].includes(user.role)) {
-		return res.status(403).json({ message: "Access denied" });
-	  }
-  
-	  // Check if the product already exists in the cart
-	  const existingItem = user.cartItems.find(
-		(item) => item.productId.toString() === productId
-	  );
-  
-	  if (existingItem) {
-		// If the product exists, increment the quantity
-		existingItem.quantity += 1;
-	  } else {
-		// Otherwise, add the product to the cart with a default quantity of 1
-		user.cartItems.push({ productId, quantity: 1 });
-	  }
-  
-	  // Save the user's updated cart to the database
-	  await user.save();
-  
-	  res.status(200).json({ cartItems: user.cartItems });
-	} catch (error) {
-	  console.error("Error in addToCart controller:", error.message);
-	  res.status(500).json({ message: "Server error", error: error.message });
-	}
-  };
-  
-  
+  try {
+    const { productId, quantity = 1 } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      cart = new Cart({ user: req.user._id, items: [], totalAmount: 0 });
+    }
+
+    const existingItem = cart.items.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (existingItem) {
+      // Update quantity if item exists
+      existingItem.quantity += quantity;
+    } else {
+      // Add new item to cart
+      cart.items.push({
+        product: productId,
+        quantity,
+        price: product.price,
+      });
+    }
+
+    // Update totalAmount
+    cart.totalAmount = cart.items.reduce(
+      (total, item) => total + item.quantity * item.price,
+      0
+    );
+
+    await cart.save();
+
+    res.status(200).json({
+      cartItems: cart.items,
+      totalAmount: cart.totalAmount,
+    });
+  } catch (error) {
+    console.error("Error in addToCart controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 export const removeAllFromCart = async (req, res) => {
-	try {
-		const { productId } = req.body;
-		const user = req.user;
-		if (!productId) {
-			user.cartItems = [];
-		} else {
-			user.cartItems = user.cartItems.filter((item) => item.id !== productId);
-		}
-		await user.save();
-		res.json(user.cartItems);
-	} catch (error) {
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
+  try {
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.items = [];
+    cart.totalAmount = 0;
+
+    await cart.save();
+
+    res.status(200).json({ message: "Cart cleared successfully" });
+  } catch (error) {
+    console.error("Error in removeAllFromCart controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 export const updateQuantity = async (req, res) => {
-	try {
-		const { id: productId } = req.params;
-		const { quantity } = req.body;
-		const user = req.user;
-		const existingItem = user.cartItems.find((item) => item.id === productId);
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
 
-		if (existingItem) {
-			if (quantity === 0) {
-				user.cartItems = user.cartItems.filter((item) => item.id !== productId);
-				await user.save();
-				return res.json(user.cartItems);
-			}
+    if (quantity < 0) {
+      return res.status(400).json({ message: "Quantity cannot be negative" });
+    }
 
-			existingItem.quantity = quantity;
-			await user.save();
-			res.json(user.cartItems);
-		} else {
-			res.status(404).json({ message: "Product not found" });
-		}
-	} catch (error) {
-		console.log("Error in updateQuantity controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    const item = cart.items.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (!item) {
+      return res.status(404).json({ message: "Product not found in cart" });
+    }
+
+    if (quantity === 0) {
+      // Remove the item if quantity is set to 0
+      cart.items = cart.items.filter(
+        (item) => item.product.toString() !== productId
+      );
+    } else {
+      // Update the quantity
+      item.quantity = quantity;
+    }
+
+    // Update the total amount
+    cart.totalAmount = cart.items.reduce(
+      (total, item) => total + item.quantity * item.price,
+      0
+    );
+
+    await cart.save();
+
+    res.status(200).json({
+      cartItems: cart.items,
+      totalAmount: cart.totalAmount,
+    });
+  } catch (error) {
+    console.error("Error in updateQuantity controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };

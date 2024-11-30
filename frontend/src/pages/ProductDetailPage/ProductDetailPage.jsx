@@ -97,18 +97,40 @@ const ProductDetailPage = () => {
     }
   
     try {
-      await axios.post(
+      const response = await axios.post(
         "http://localhost:5000/api/cart/",
         {
           productId: data._id,
-          quantity: 1,
+          quantity: 1, // You may adjust the quantity dynamically if needed
         },
-        { withCredentials: true }
+        { withCredentials: true } // Ensures the cookies are sent with the request
       );
-      message.success("Đã thêm vào giỏ hàng");
+      
+      if (response.status === 200) {
+        message.success("Đã thêm vào giỏ hàng");
+      } else {
+        message.error("Không thể thêm vào giỏ hàng");
+      }
     } catch (error) {
-      message.error("Không thể thêm vào giỏ hàng");
-      console.error(error);
+      if (error.response) {
+        // Handle specific HTTP status codes
+        if (error.response.status === 401) {
+          message.warning("Vui lòng đăng nhập để thêm vào giỏ hàng");
+          navigate("/login");
+        } else if (error.response.status === 400) {
+          message.error("Dữ liệu không hợp lệ");
+        } else if (error.response.status === 404) {
+          message.error("Sản phẩm không tồn tại");
+        } else {
+          message.error(
+            error.response.data?.message || "Đã xảy ra lỗi, vui lòng thử lại sau"
+          );
+        }
+      } else {
+        // Handle network or unexpected errors
+        message.error("Không thể kết nối đến máy chủ");
+      }
+      console.error("Error in handleAddToCart:", error);
     }
   };
   
