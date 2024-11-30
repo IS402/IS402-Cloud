@@ -19,9 +19,11 @@ const { Text } = Typography;
 
 const CartPage = () => {
   const [cartData, setCartData] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(0); // Total amount state
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Fetch cart data
   useEffect(() => {
     const fetchCartData = async () => {
       try {
@@ -29,6 +31,7 @@ const CartPage = () => {
           withCredentials: true, // Ensures cookies are sent
         });
         setCartData(response.data);
+        setTotalAmount(response.data?.totalAmount || 0); // Initialize total amount
         setLoading(false);
       } catch (error) {
         if (error.response?.status === 401) {
@@ -44,16 +47,55 @@ const CartPage = () => {
     fetchCartData();
   }, [navigate]);
 
+  // Clear the cart
   const handleClearCart = async () => {
     try {
       await axios.delete("http://localhost:5000/api/cart", {
         withCredentials: true,
       });
       setCartData(null); // Clear cart data locally
+      setTotalAmount(0); // Reset total amount
       message.success("Đã xóa giỏ hàng");
     } catch (error) {
       message.error("Không thể xóa giỏ hàng");
     }
+  };
+  // Handle order confirmation
+  const handleOrderConfirmation = () => {
+    navigate("/payment"); // Redirect to the /payment page
+  };
+  // Update the total amount when a product's quantity changes
+  const handleTotalChange = (productId, productTotal) => {
+    if (!cartData) return;
+
+    // Recalculate the total amount
+    const updatedItems = cartData.items.map((item) =>
+      item.product._id === productId
+        ? { ...item, total: productTotal }
+        : item
+    );
+
+    const newTotalAmount = updatedItems.reduce(
+      (sum, item) => sum + item.quantity * item.product.price,
+      0
+    );
+
+    setTotalAmount(newTotalAmount);
+  };
+
+  // Remove a product from the cart
+  const handleDeleteProduct = (productId) => {
+    setCartData((prev) => ({
+      ...prev,
+      items: prev.items.filter((item) => item.product._id !== productId),
+    }));
+
+    // Update the total amount after deletion
+    const updatedAmount = cartData.items
+      .filter((item) => item.product._id !== productId)
+      .reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+
+    setTotalAmount(updatedAmount);
   };
 
   return (
@@ -98,10 +140,18 @@ const CartPage = () => {
                   Chọn tất cả
                 </Text>
               </div>
-              <DeleteOutlined style={{ fontSize: 20 }} onClick={handleClearCart} />
+              <DeleteOutlined
+                style={{ fontSize: 20 }}
+                onClick={handleClearCart}
+              />
             </div>
             {cartData?.items.map((product) => (
-              <ProductCartComponent key={product.product._id} product={product} />
+              <ProductCartComponent
+                key={product.product._id}
+                product={product}
+                onQuantityChange={handleTotalChange}
+                onDelete={handleDeleteProduct}
+              />
             ))}
           </Col>
           <Col span={8}>
@@ -124,7 +174,7 @@ const CartPage = () => {
               >
                 <Text>Tổng tiền</Text>
                 <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                {`${(cartData?.totalAmount || 0).toLocaleString()} đ`}
+                  {`${totalAmount.toLocaleString()} đ`}
                 </Text>
               </div>
               <Button
@@ -137,6 +187,7 @@ const CartPage = () => {
                   fontSize: 18,
                   marginTop: 20,
                 }}
+                onClick={handleOrderConfirmation} // Add onClick handler
               >
                 Xác nhận đơn hàng
               </Button>

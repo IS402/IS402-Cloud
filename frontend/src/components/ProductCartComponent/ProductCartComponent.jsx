@@ -1,17 +1,35 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Checkbox, Col, Typography, message } from "antd";
-
 import { PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 
 const whiteColor = "#ffffff";
 const { Text } = Typography;
 
-const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
+const ProductCartComponent = ({ product, onQuantityChange, onDelete, onTotalChange }) => {
   const [loading, setLoading] = useState(false);
+
+  const [quantity, setQuantity] = useState(product?.quantity || 1);
+  const [base64Image, setBase64Image] = useState(null);
   const [quantity, setQuantity] = useState(product?.quantity || 0);
   const [totalPrice, setTotalPrice] = useState((product?.product?.price || 0) * quantity);
+
+  // Convert buffer to Base64 and store it
+  useEffect(() => {
+    if (product?.product?.images?.length > 0 && product.product.images[0]?.data) {
+      const bufferData = product.product.images[0].data.data; // Buffer data
+      const contentType = product.product.images[0].contentType; // Image content type
+      const base64 = `data:${contentType};base64,${Buffer.from(bufferData).toString("base64")}`;
+      setBase64Image(base64);
+    }
+  }, [product]);
+
+  // Update total when quantity changes
+  useEffect(() => {
+    const productTotal = quantity * product?.product?.price || 0;
+    onTotalChange && onTotalChange(product?.product?._id, productTotal);
+  }, [quantity, product, onTotalChange]);
+
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity < 1) {
@@ -59,8 +77,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
       setLoading(false);
     }
   };
-  const bufferData = product.product.images[0].data.data; // Dữ liệu Buffer
-  const base64Image = `data:${product.product.images[0].contentType};base64,${Buffer.from(bufferData).toString('base64')}`;
+
   return (
     <div
       style={{
@@ -85,10 +102,10 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
           width: 80,
           height: 80,
           cursor: "pointer",
-          justifyContent:'center'
+          justifyContent: "center",
         }}
       >
-        {product?.product?.images && product.product.images.length > 0 ? (
+        {base64Image ? (
           <img
             src={base64Image}
             alt={product?.product?.name || "Product"}
@@ -125,6 +142,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               width: 25,
               display: "flex",
               justifyContent: "center",
+              alignItems: "center",
             }}
             onClick={() =>
               !loading && handleQuantityChange(product?.product?._id, quantity - 1)
@@ -138,6 +156,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               width: 25,
               display: "flex",
               justifyContent: "center",
+              alignItems: "center",
             }}
           >
             <Text>{quantity}</Text>
@@ -152,6 +171,7 @@ const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
               width: 25,
               display: "flex",
               justifyContent: "center",
+              alignItems: "center",
             }}
             onClick={() =>
               !loading && handleQuantityChange(product?.product?._id, quantity + 1)
