@@ -1,11 +1,48 @@
 import React from "react";
-import { Checkbox, Col, Input, Typography } from "antd";
-import image from "../../images/ss-s24-ultra-xam-222.png";
+import { Checkbox, Col, Typography } from "antd";
 import { PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
 
 const whiteColor = "#ffffff";
 const { Text } = Typography;
-const ProductCartComponent = () => {
+
+const ProductCartComponent = ({ product, onQuantityChange, onDelete }) => {
+  const renderImage = (images) => {
+    if (!images || images.length === 0) {
+      return <span>No image</span>;
+    }
+
+    // Handle base64 image data
+    if (images[0].data) {
+      const base64String = Buffer.from(images[0].data).toString('base64');
+      const contentType = images[0].contentType;
+      return (
+        <img
+          src={`data:${contentType};base64,${base64String}`}
+          alt={product?.product?.name || "Product"}
+          style={{ 
+            height: 60, 
+            width: '100%',
+            objectFit: "cover",
+            borderRadius: 6 
+          }}
+        />
+      );
+    }
+
+    // Handle regular image URLs
+    return (
+      <img
+        src={images[0]}
+        alt={product?.product?.name || "Product"}
+        style={{ 
+          height: 60, 
+          width: '100%',
+          objectFit: "cover",
+          borderRadius: 6 
+        }}
+      />
+    );
+  };
   return (
     <div
       style={{
@@ -14,7 +51,7 @@ const ProductCartComponent = () => {
         borderRadius: 10,
         backgroundColor: whiteColor,
         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-        padding:"20px 20px",
+        padding: "20px 20px",
       }}
     >
       <Checkbox />
@@ -32,10 +69,18 @@ const ProductCartComponent = () => {
           cursor: "pointer",
         }}
       >
-        <img src={image} alt="" style={{ height: 60 }} />
+        {product?.product?.images && product.product.images.length > 0 ? (
+          <img
+            src={product.product.images[0]}
+            alt={product?.product?.name || "Product"}
+            style={{ height: 60, objectFit: "cover" }}
+          />
+        ) : (
+          <span>No image</span>
+        )}
       </Col>
       <Text style={{ fontWeight: "500", fontSize: 16 }}>
-        Samsung Galaxy S24 Ultra 12GB 512GB
+        {product?.product?.name || "Tên sản phẩm"}
       </Text>
       <div
         style={{
@@ -47,7 +92,7 @@ const ProductCartComponent = () => {
       >
         <div>
           <Text style={{ color: "#EC3C3C", fontWeight: "500" }}>
-            39.000.000
+            {`${(product?.product?.price || 0).toLocaleString()} đ`}
           </Text>
         </div>
         <div style={{ display: "flex" }}>
@@ -62,6 +107,10 @@ const ProductCartComponent = () => {
               display: "flex",
               justifyContent: "center",
             }}
+            onClick={() =>
+              onQuantityChange &&
+              onQuantityChange(product?.product?._id, product?.quantity - 1)
+            }
           />
           <div
             style={{
@@ -73,7 +122,7 @@ const ProductCartComponent = () => {
               justifyContent: "center",
             }}
           >
-            <Text>1</Text>
+            <Text>{product?.quantity || 0}</Text>
           </div>
           <PlusOutlined
             style={{
@@ -86,11 +135,18 @@ const ProductCartComponent = () => {
               display: "flex",
               justifyContent: "center",
             }}
+            onClick={() =>
+              onQuantityChange &&
+              onQuantityChange(product?.product?._id, product?.quantity + 1)
+            }
           />
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <DeleteOutlined style={{ fontSize: 20 }} />
+        <DeleteOutlined
+          style={{ fontSize: 20 }}
+          onClick={() => onDelete && onDelete(product?.product?._id)}
+        />
       </div>
     </div>
   );
