@@ -60,7 +60,10 @@ const CartPage = () => {
       message.error("Không thể xóa giỏ hàng");
     }
   };
-
+  // Handle order confirmation
+  const handleOrderConfirmation = () => {
+    navigate("/payment"); // Redirect to the /payment page
+  };
   // Update the total amount when a product's quantity changes
   const handleTotalChange = (productId, productTotal) => {
     if (!cartData) return;
@@ -184,6 +187,7 @@ const CartPage = () => {
                   fontSize: 18,
                   marginTop: 20,
                 }}
+                onClick={handleOrderConfirmation} // Add onClick handler
               >
                 Xác nhận đơn hàng
               </Button>
