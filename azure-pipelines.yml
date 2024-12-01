@@ -1,73 +1,81 @@
 trigger:
-  - main  # Trigger the pipeline on changes to the 'main' branch
+  - main  # Trigger pipeline khi có thay đổi trên nhánh `main`
 
 variables:
-  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'
-  webAppName: 'wumiibo'
-  environmentName: 'wumiibo'
-  selfHostedPoolName: 'Self-hosted'
-  serverPort: 8080
+  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299' # Subscription Azure
+  webAppName: 'wumiibo'  # Tên Azure Web App
+  environmentName: 'wumiibo'  # Môi trường deployment
+  serverPort: 8080  # Port của server Node.js
 
 stages:
+# 1. Build Stage
 - stage: Build
-  displayName: "Build Stage"
+  displayName: "Build Application"
   jobs:
-  - job: Build
-    displayName: "Build and Test"
+  - job: BuildBackend
+    displayName: "Build and Test Backend"
     pool:
-      name: $(selfHostedPoolName)
+      vmImage: 'ubuntu-latest'  # Sử dụng máy Ubuntu để build
 
     steps:
-    # Install Node.js
+    # Cài đặt Node.js 20
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'
-      displayName: 'Install Node.js'
+        versionSpec: '20.x'  # Đảm bảo Node.js 20 được cài đặt
+      displayName: 'Install Node.js 20'
 
-    # Navigate to backend folder and install dependencies
+    # Cập nhật npm
+    - script: |
+        npm install -g npm@latest
+        npm --version
+      displayName: 'Update npm to latest version'
+
+    # Cài đặt dependencies và build backend
     - script: |
         cd backend
-        npm install --production  # Install only production dependencies
-        npm run build --if-present  # Build if build script exists
-      displayName: 'Install dependencies and build'
+        npm install
+        npm run build --if-present  # Nếu dự án có script build
+        npm test --if-present       # Nếu có script test
+      displayName: 'Install dependencies, build, and test backend'
 
-    # Archive the backend folder, including node_modules
+    # Đóng gói backend thành artifact
     - task: ArchiveFiles@2
-      displayName: 'Archive Backend Artifacts'
       inputs:
         rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
         replaceExistingArchive: true
+      displayName: 'Archive Backend'
 
-    # Publish the artifact for the next stage
-    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+    # Publish artifact
+    - publish: $(Build.ArtifactStagingDirectory)/backend.zip
       artifact: drop
-      displayName: 'Publish Backend Artifacts'
+      displayName: 'Publish Backend Artifact'
 
+# 2. Deploy Stage
 - stage: Deploy
-  displayName: "Deploy Stage"
+  displayName: "Deploy Application"
   dependsOn: Build
-  condition: succeeded()
+  condition: succeeded()  # Chỉ chạy nếu stage Build thành công
   jobs:
-  - deployment: Deploy
-    displayName: "Deploy to Azure"
-    environment: $(environmentName)
+  - deployment: DeployToAzure
+    displayName: "Deploy Backend to Azure Web App"
+    environment: $(environmentName)  # Tên môi trường deployment
     pool:
-      name: $(selfHostedPoolName)
+      vmImage: 'ubuntu-latest'  # Sử dụng Ubuntu để deploy
 
     strategy:
       runOnce:
         deploy:
           steps:
-          # Deploy the app to Azure Web App
+          # Deploy ứng dụng đến Azure Web App
           - task: AzureWebApp@1
-            displayName: 'Deploy to Azure Web App: $(webAppName)'
+            displayName: 'Deploy Backend to Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
-              appType: webAppLinux
+              appType: webAppLinux  # Loại App Service là Linux
               appName: $(webAppName)
-              runtimeStack: 'NODE|20LTS'
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              startUpCommand: 'cd backend && node server.js --port $(serverPort)'
+              runtimeStack: 'NODE|20-lts'  # Runtime stack Node.js 20 LTS
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+              startUpCommand: 'node server.js --port $(serverPort)'
