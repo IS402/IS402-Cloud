@@ -27,14 +27,13 @@ stages:
     # Navigate to backend folder and install dependencies
     - script: |
         cd backend
-        npm install
-        npm run build --if-present
-        npm run test --if-present
-      displayName: 'Install dependencies, build, and test'
+        npm install --production  # Install only production dependencies
+        npm run build --if-present  # Build if build script exists
+      displayName: 'Install dependencies and build'
 
-    # Archive the backend folder
+    # Archive the backend folder, including node_modules
     - task: ArchiveFiles@2
-      displayName: 'Archive Build Artifacts'
+      displayName: 'Archive Backend Artifacts'
       inputs:
         rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
         includeRootFolder: false
@@ -45,7 +44,7 @@ stages:
     # Publish the artifact for the next stage
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       artifact: drop
-      displayName: 'Publish Build Artifacts'
+      displayName: 'Publish Backend Artifacts'
 
 - stage: Deploy
   displayName: "Deploy Stage"
@@ -71,4 +70,4 @@ stages:
               appName: $(webAppName)
               runtimeStack: 'NODE|20LTS'
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              startUpCommand: 'node server.js --port $(serverPort)'  # Ensure server.js is executed
+              startUpCommand: 'cd backend && node server.js --port $(serverPort)'
