@@ -1,8 +1,8 @@
 trigger:
-  - main  # Trigger pipeline khi có thay đổi trên nhánh `main`
+  - main  # Trigger pipeline khi có thay đổi trên nhánh 'main'
 
 variables:
-  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299' # Subscription Azure
+  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'  # Subscription Azure
   webAppName: 'wumiibo'  # Tên Azure Web App
   environmentName: 'wumiibo'  # Môi trường deployment
   serverPort: 8080  # Port của server Node.js
@@ -15,27 +15,26 @@ stages:
   - job: BuildBackend
     displayName: "Build and Test Backend"
     pool:
-      vmImage: 'ubuntu-latest'  # Sử dụng máy Ubuntu để build
+      name: Self-hosted  # Sử dụng Self-hosted Agent Pool
 
     steps:
     # Cài đặt Node.js 20
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'  # Đảm bảo Node.js 20 được cài đặt
+        versionSpec: '20.x'  # Cài đặt Node.js phiên bản 20
       displayName: 'Install Node.js 20'
 
-    # Cập nhật npm
+    # Cập nhật npm lên phiên bản mới nhất
     - script: |
         npm install -g npm@latest
         npm --version
       displayName: 'Update npm to latest version'
 
-    # Cài đặt dependencies và build backend # Nếu dự án có script build # Nếu có script test
+    # Cài đặt dependencies, build, và test backend  
     - script: |
         cd backend
         npm install
         npm run build --if-present  
-        npm test --if-present       
       displayName: 'Install dependencies, build, and test backend'
 
     # Đóng gói backend thành artifact
@@ -63,7 +62,7 @@ stages:
     displayName: "Deploy Backend to Azure Web App"
     environment: $(environmentName)  # Tên môi trường deployment
     pool:
-      vmImage: 'ubuntu-latest'  # Sử dụng Ubuntu để deploy
+      name: Self-hosted  # Sử dụng Self-hosted Agent Pool
 
     strategy:
       runOnce:
@@ -78,4 +77,4 @@ stages:
               appName: $(webAppName)
               runtimeStack: 'NODE|20-lts'  # Runtime stack Node.js 20 LTS
               package: '$(Pipeline.Workspace)/drop/backend.zip'
-              startUpCommand: 'node server.js --port $(serverPort)'
+              startUpCommand: 'node server.js --port $(serverPort)'  # Command để khởi chạy server
