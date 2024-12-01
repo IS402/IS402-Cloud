@@ -30,12 +30,12 @@ stages:
         npm --version
       displayName: 'Update npm to latest version'
 
-    # Cài đặt dependencies và build backend
+    # Cài đặt dependencies và build backend # Nếu dự án có script build # Nếu có script test
     - script: |
         cd backend
         npm install
-        npm run build --if-present  # Nếu dự án có script build
-        npm test --if-present       # Nếu có script test
+        npm run build --if-present  
+        npm test --if-present       
       displayName: 'Install dependencies, build, and test backend'
 
     # Đóng gói backend thành artifact
