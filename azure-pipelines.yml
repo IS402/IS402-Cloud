@@ -17,6 +17,9 @@ variables:
   # Name of the self-hosted agent pool
   selfHostedPoolName: 'Self-hosted'
 
+  # Port for the Express.js server
+  serverPort: 8080
+
 stages:
 - stage: Build
   displayName: "Build Stage"
@@ -79,4 +82,4 @@ stages:
               appName: $(webAppName)
               runtimeStack: 'NODE|20LTS'  # Runtime stack (Node.js 20 LTS)
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              startUpCommand: 'npm start'  # Default start command for Node.js apps
+              startUpCommand: 'node server.js --port $(serverPort)'  # Start the server on the specified port
