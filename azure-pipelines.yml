@@ -1,23 +1,11 @@
-# Node.js Express Web App to Linux on Azure
-# This pipeline builds, tests, and deploys a Node.js Express app to Azure using a self-hosted agent.
-
 trigger:
   - main  # Trigger the pipeline on changes to the 'main' branch
 
 variables:
-  # Azure Resource Manager connection
   azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'
-
-  # Azure Web App name
   webAppName: 'wumiibo'
-
-  # Environment name for deployment tracking
   environmentName: 'wumiibo'
-
-  # Name of the self-hosted agent pool
   selfHostedPoolName: 'Self-hosted'
-
-  # Port for the Express.js server
   serverPort: 8080
 
 stages:
@@ -27,27 +15,28 @@ stages:
   - job: Build
     displayName: "Build and Test"
     pool:
-      name: $(selfHostedPoolName)  # Use the self-hosted agent pool
+      name: $(selfHostedPoolName)
 
     steps:
     # Install Node.js
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'  # Specify Node.js version
+        versionSpec: '20.x'
       displayName: 'Install Node.js'
 
-    # Install dependencies, build, and test the app
+    # Navigate to backend folder and install dependencies
     - script: |
+        cd backend
         npm install
-        npm run build --if-present  # Build if build script exists
-        npm run test --if-present   # Test if test script exists
+        npm run build --if-present
+        npm run test --if-present
       displayName: 'Install dependencies, build, and test'
 
-    # Archive the build files
+    # Archive the backend folder
     - task: ArchiveFiles@2
       displayName: 'Archive Build Artifacts'
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'  # Root folder for the archive
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
         includeRootFolder: false
         archiveType: zip
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
@@ -61,13 +50,13 @@ stages:
 - stage: Deploy
   displayName: "Deploy Stage"
   dependsOn: Build
-  condition: succeeded()  # Proceed only if the Build stage succeeds
+  condition: succeeded()
   jobs:
   - deployment: Deploy
     displayName: "Deploy to Azure"
     environment: $(environmentName)
     pool:
-      name: $(selfHostedPoolName)  # Use the self-hosted agent pool
+      name: $(selfHostedPoolName)
 
     strategy:
       runOnce:
@@ -78,8 +67,8 @@ stages:
             displayName: 'Deploy to Azure Web App: $(webAppName)'
             inputs:
               azureSubscription: $(azureSubscription)
-              appType: webAppLinux  # Targeting a Linux-based Web App
+              appType: webAppLinux
               appName: $(webAppName)
-              runtimeStack: 'NODE|20LTS'  # Runtime stack (Node.js 20 LTS)
+              runtimeStack: 'NODE|20LTS'
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              startUpCommand: 'node server.js --port $(serverPort)'  # Start the server on the specified port
+              startUpCommand: 'node server.js --port $(serverPort)'  # Ensure server.js is executed
