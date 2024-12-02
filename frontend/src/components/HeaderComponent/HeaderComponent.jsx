@@ -36,14 +36,6 @@ const items = [
     ),
   },
   {
-    key: "brands",
-    label: (
-      <Link to="/product/brand/thuong-hieu" style={{ color: whiteColor, fontSize: 16 }}>
-        Thương hiệu
-      </Link>
-    ),
-  },
-  {
     key: "smartwatches",
     label: (
       <Link to="/product/dong-ho" style={{ color: whiteColor, fontSize: 16 }}>
