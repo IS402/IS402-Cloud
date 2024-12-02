@@ -70,7 +70,7 @@ stages:
     # Step 1: Deploy the app to Azure Web App
     - task: AzureWebApp@1
       inputs:
-        azureSubscription: $(azureSubscription)
+        azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'
         appType: webAppLinux
         appName: $(webAppName)
         runtimeStack: 'NODE|20-lts'
