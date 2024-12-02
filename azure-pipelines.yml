@@ -26,7 +26,7 @@ stages:
     - task: AzureCLI@2
       displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: c4223a0b-6719-4c48-a291-1c557fda900e  # Service Connection đến Azure
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299 # Service Connection đến Azure
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
@@ -59,7 +59,7 @@ stages:
     - task: AzureCLI@2
       displayName: Deploy to Azure Web App
       inputs:
-        azureSubscription: c4223a0b-6719-4c48-a291-1c557fda900e
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
