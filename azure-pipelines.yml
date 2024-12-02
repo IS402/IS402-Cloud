@@ -5,7 +5,7 @@ variables:
   azureSubscription: '974ba5ab-9bc7-41c7-84ac-d53863572299'  # Azure Subscription ID
   webAppName: 'wumiibo'  # Azure Web App Name
   environmentName: 'wumiibo'  # Deployment environment
-  serverPort: 8080  # Node.js server port
+  serverPort: 5000  # Node.js server port
   nodeVersion: '20.x'  # Node.js version
 
 stages:
