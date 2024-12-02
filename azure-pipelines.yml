@@ -16,7 +16,7 @@ stages:
     displayName: "Build and Test Backend"
     pool:
       name: Self-hosted  # Use Self-hosted Agent Pool
-
+      clean: true  # Clean the working directory before the job runs
     steps:
     # Install Node.js 20
     - task: NodeTool@0
