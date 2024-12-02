@@ -2,7 +2,7 @@ stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: Self-hosted
+    name: Self-hosted 1
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
