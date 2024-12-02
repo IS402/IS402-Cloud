@@ -1,79 +1,50 @@
-trigger:
-  - main  # Trigger pipeline on changes to 'main' branch
-
-variables:
-  azureSubscription: '974ba5ab-9bc7-41c7-84ac-d53863572299'  # Azure Subscription ID
-  webAppName: 'wumiibo'  # Azure Web App Name
-  environmentName: 'wumiibo'  # Deployment environment
-  serverPort: 5000  # Node.js server port
-  nodeVersion: '20.x'  # Node.js version
-
 stages:
-- stage: Build
-  displayName: "Build MERN Application"
+- stage: BuildAndPush
+  displayName: Build and Push Docker Images
   jobs:
-  - job: BuildJob
-    displayName: "Build Job"
-    pool:
-      name: Self-hosted  # Use your self-hosted agent pool
-      clean: true  # Clean the workspace before running
-
+  - job: BuildAndPush
+    displayName: Build and Push Docker Images to ACR
     steps:
-    # Step 1: Install Node.js 20 LTS (Ensure it's pre-installed on your self-hosted agent)
-    - script: |
-        node --version
-        npm --version
-      displayName: 'Verify Node.js and npm Installation'
-
-    # Step 2: Install dependencies and build backend
-    - script: |
-        cd backend
-        npm install
-        npm run build --if-present
-      displayName: 'Install and Build Backend'
-
-    # Step 3: Install dependencies and build frontend
-    - script: |
-        cd frontend
-        npm install
-        npm run build
-      displayName: 'Install and Build Frontend'
-
-    # Step 4: Package the application
     - task: PowerShell@2
+      displayName: Login to Azure Container Registry
       inputs:
         targetType: 'inline'
         script: |
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          function Create-ZipFile($zipFile, $sourceFolder) {
-            [System.IO.Compression.ZipFile]::CreateFromDirectory($sourceFolder, $zipFile)
-          }
-          Create-ZipFile "$(Build.ArtifactStagingDirectory)/mern-app.zip" "$(System.DefaultWorkingDirectory)"
-      displayName: 'Package the Application'
+          az acr login --name $(ACR_NAME)
 
-    # Step 5: Publish the artifact for deployment
-    - publish: $(Build.ArtifactStagingDirectory)/mern-app.zip
-      artifact: drop
-      displayName: 'Publish Build Artifact'
+    - task: PowerShell@2
+      displayName: Build and Push Frontend Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest -f frontend/Dockerfile.UI .
+          docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest
+
+    - task: PowerShell@2
+      displayName: Build and Push Backend Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest -f backend/Dockerfile .
+          docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest
+
+    - task: PowerShell@2
+      displayName: Push MongoDB Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker pull mongo:latest
+          docker tag mongo:latest $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
+          docker push $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
 
 - stage: Deploy
-  displayName: "Deploy MERN Application"
-  dependsOn: Build
-  condition: succeeded()
+  displayName: Deploy to Azure Web App
   jobs:
-  - job: DeployJob
-    displayName: "Deploy Job"
-    pool:
-      name: Self-hosted  # Use your self-hosted agent pool
-
+  - job: Deploy
     steps:
-    # Step 1: Deploy the app to Azure Web App
-    - task: AzureWebApp@1
+    - task: PowerShell@2
+      displayName: Deploy to Azure Web App
       inputs:
-        azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'
-        appType: webAppLinux
-        appName: $(webAppName)
-        runtimeStack: 'NODE|20-lts'
-        package: '$(Pipeline.Workspace)/drop/mern-app.zip'
-        startUpCommand: 'node backend/server.js'
-      displayName: 'Deploy MERN App to Azure'
+        targetType: 'inline'
+        script: |
+          az webapp config container set --name $(APP_NAME) --resource-group $(RESOURCE_GROUP) --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest
