@@ -75,5 +75,5 @@ stages:
         appName: $(webAppName)
         runtimeStack: 'NODE|20-lts'
         package: '$(Pipeline.Workspace)/drop/mern-app.zip'
-        startUpCommand: 'node backend/server.js --port $(serverPort)'
+        startUpCommand: 'node backend/server.js'
       displayName: 'Deploy MERN App to Azure'
