@@ -27,7 +27,7 @@ stages:
       displayName: Login to Azure Container Registry
       inputs:
         azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299 # Service Connection đến Azure
-        scriptType: bash
+        scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
           az acr login --name $(ACR_NAME)
