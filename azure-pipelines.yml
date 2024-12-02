@@ -1,6 +1,8 @@
 stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
+  pool:
+    name: Self-hosted
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -39,6 +41,8 @@ stages:
 
 - stage: Deploy
   displayName: Deploy to Azure Web App
+  pool:
+    name: Self-hosted
   jobs:
   - job: Deploy
     steps:
