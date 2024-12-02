@@ -1,101 +1,116 @@
 trigger:
-  - main  # Trigger pipeline on changes to the 'main' branch
+  - main  # Trigger pipeline trên nhánh 'main'
 
 variables:
-  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'  # Azure Subscription
-  webAppName: 'wumiibo'  # Azure Web App name
-  environmentName: 'wumiibo'  # Deployment environment
-  serverPort: 8080  # Port for Node.js server
-  MONGO_URI: 'mongodb+srv://21521226:2pEuylAyShJli4CW@is402.rfbnw.mongodb.net/products?retryWrites=true&w=majority&appName=IS402'  # MongoDB connection string
+  azureSubscription: '974ba5ab-9bc7-41c7-84ac-d53863572299'  # Azure Subscription ID
+  webAppName: 'wumiibo'  # Tên Azure Web App
+  environmentName: 'wumiibo'  # Môi trường triển khai
+  serverPort: 8080  # Port cho server Node.js
+  - group: MONGO_URI  # Tham chiếu biến nhóm để bảo mật MONGO_URI
 
 stages:
-# 1. Build Stage
 - stage: Build
   displayName: "Build Application"
   jobs:
   - job: BuildApp
-    displayName: "Build and Test Backend and Frontend"
+    displayName: "Build and Install Dependencies"
     pool:
-      name: Self-hosted  # Use Self-hosted Agent Pool
-      clean: true  # Clean the working directory before the job runs
+      name: Self-hosted  # Sử dụng agent tự quản lý
+      clean: true  # Làm sạch thư mục trước khi chạy
 
     steps:
-    # Step 1: Install Node.js 20
+    # Step 1: Cài đặt Node.js 20
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'  # Install Node.js version 20
-      displayName: 'Install Node.js 20'
+        versionSpec: '20.x'  # Cài Node.js version 20
+      displayName: 'Cài Node.js 20'
 
-    # Step 2: Update npm to the latest version
+    # Step 2: Cập nhật npm lên phiên bản mới nhất
     - script: |
-        npm install -g npm@latest
-        npm --version
-      displayName: 'Update npm to the latest version'
+      npm install -g npm@latest
+      npm --version
+    displayName: 'Cập nhật npm lên phiên bản mới nhất'
 
-    # Step 3: Install and Build Backend
+    # Step 3: Cài đặt dependencies cho backend
     - script: |
-        cd backend
-        npm install
-        npm run build --if-present
-      displayName: 'Install dependencies and build backend'
+      cd backend
+      npm install
+    displayName: 'Cài đặt dependencies cho Backend'
 
-    # Step 4: Install and Build Frontend
+    # Step 4: Cài đặt dependencies cho frontend
     - script: |
-        cd frontend
-        npm install
-        npm run build  # Build React frontend
-      displayName: 'Install dependencies and build frontend'
+      cd frontend
+      npm install
+    displayName: 'Cài đặt dependencies cho Frontend'
 
-    # Step 5: Archive Backend and Frontend into an Artifact
+    # Step 5: Cài đặt dependencies tại thư mục tổng
+    - script: |
+      cd ..
+      npm install
+    displayName: 'Cài đặt dependencies tại thư mục tổng'
+
+    # Step 6: Build Frontend
+    - script: |
+      cd frontend
+      npm run build
+    displayName: 'Build Frontend'
+
+    # Step 7: Build Backend (nếu cần)
+    - script: |
+      cd backend
+      npm run build --if-present
+    displayName: 'Build Backend'
+
+    # Step 8: Đóng gói dự án
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'  # Archive root directory
-        includeRootFolder: false
-        archiveType: zip
+        rootFolder: '$(System.DefaultWorkingDirectory)'
+        archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/mern-app.zip'
         replaceExistingArchive: true
-      displayName: 'Archive Backend and Frontend'
+      displayName: 'Đóng gói dự án'
 
-    # Step 6: Publish Artifact
+    # Step 9: Xuất Artifact để triển khai
     - publish: $(Build.ArtifactStagingDirectory)/mern-app.zip
       artifact: drop
-      displayName: 'Publish Artifact for Deployment'
+      displayName: 'Xuất Artifact để triển khai'
 
 # 2. Deploy Stage
 - stage: Deploy
   displayName: "Deploy Application"
   dependsOn: Build
-  condition: succeeded()  # Only run if Build stage is successful
+  condition: succeeded()  # Chỉ chạy khi Build thành công
   jobs:
   - deployment: DeployToAzure
-    displayName: "Deploy MERN App to Azure Web App"
-    environment: $(environmentName)  # Deployment environment
+    displayName: "Triển khai MERN App lên Azure Web App"
+    environment: $(environmentName)  # Môi trường triển khai
     pool:
-      name: Self-hosted  # Use Self-hosted Agent Pool
+      name: Self-hosted  # Sử dụng agent tự quản lý
 
     strategy:
       runOnce:
         deploy:
           steps:
-          # Step 7: Deploy Backend and Frontend to Azure Web App
+          # Step 1: Triển khai MERN App lên Azure Web App
           - task: AzureWebApp@1
-            displayName: 'Deploy MERN App to Azure Web App'
+            displayName: 'Triển khai MERN App lên Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
-              appType: webAppLinux  # App Service type is Linux
+              appType: webAppLinux  # Dịch vụ App Service loại Linux
               appName: $(webAppName)
-              runtimeStack: 'NODE|20-lts'  # Node.js 20 LTS runtime
+              runtimeStack: 'NODE|20-lts'  # Runtime Node.js 20 LTS
               package: '$(Pipeline.Workspace)/drop/mern-app.zip'
-              startUpCommand: 'node backend/server.js --port $(serverPort)'  # Command to start the server
+              startUpCommand: 'node backend/server.js --port $(serverPort)'  # Lệnh khởi chạy server
               appSettings: |
-                WEBSITE_NODE_DEFAULT_VERSION=20-lts 
+                WEBSITE_NODE_DEFAULT_VERSION=20-lts
                 MONGO_URI=$(MONGO_URI)
 
-          # Step 8: Restart Azure Web App
+          # Step 2: Restart Azure Web App
           - task: AzureCLI@2
-            displayName: 'Restart Azure Web App'
+            displayName: 'Khởi động lại Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
               scriptType: bash
               scriptLocation: inlineScript
-              inlineScript: az webapp restart --name $(webAppName) --resource-group 'Wumiibo'
+              inlineScript: |
+                az webapp restart --name $(webAppName) --resource-group 'Wumiibo'
