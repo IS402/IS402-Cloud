@@ -1,113 +1,105 @@
 trigger:
-  - main  # Trigger pipeline trên nhánh 'main'
+  - main  # Trigger pipeline on changes to 'main' branch
 
 variables:
   azureSubscription: '974ba5ab-9bc7-41c7-84ac-d53863572299'  # Azure Subscription ID
-  webAppName: 'wumiibo'  # Tên Azure Web App
-  environmentName: 'wumiibo'  # Môi trường triển khai
-  serverPort: 8080  # Port cho server Node.js
-  - group: MONGO_URI  # Tham chiếu biến nhóm để bảo mật MONGO_URI
+  webAppName: 'wumiibo'  # Azure Web App Name
+  environmentName: 'wumiibo'  # Deployment environment
+  serverPort: 8080  # Node.js server port
+  nodeVersion: '18.x'  # Node.js version
 
 stages:
 - stage: Build
   displayName: "Build Application"
   jobs:
-  - job: BuildApp
-    displayName: "Build and Install Dependencies"
+  - job: BuildJob
+    displayName: "Build and Test"
     pool:
-      name: Self-hosted  # Sử dụng agent tự quản lý
-      clean: true  # Làm sạch thư mục trước khi chạy
+      name: Self-hosted  # Use self-hosted agent pool
+      clean: true  # Clean workspace before running
 
     steps:
-    # Step 1: Cài đặt Node.js 20
+    # Step 1: Install Node.js
     - task: NodeTool@0
       inputs:
-        versionSpec: '20.x'  # Cài Node.js version 20
-      displayName: 'Cài Node.js 20'
+        versionSpec: '$(nodeVersion)'
+      displayName: 'Install Node.js'
 
-    # Step 2: Cập nhật npm lên phiên bản mới nhất
-    - script: |
-      npm install -g npm@latest
-      npm --version
-    displayName: 'Cập nhật npm lên phiên bản mới nhất'
-
-    # Step 3: Cài đặt dependencies cho backend
-    - script: |
-      cd backend
-      npm install
-    displayName: 'Cài đặt dependencies cho Backend'
-
-    # Step 4: Cài đặt dependencies cho frontend
-    - script: |
-      cd frontend
-      npm install
-    displayName: 'Cài đặt dependencies cho Frontend'
-
-    # Step 5: Cài đặt dependencies tại thư mục tổng
-    - script: |
-      cd ..
-      npm install
-    displayName: 'Cài đặt dependencies tại thư mục tổng'
-
-    # Step 6: Build Frontend
-    - script: |
-      cd frontend
-      npm run build
-    displayName: 'Build Frontend'
-
-    # Step 7: Build Backend (nếu cần)
-    - script: |
-      cd backend
-      npm run build --if-present
-    displayName: 'Build Backend'
-
-    # Step 8: Đóng gói dự án
-    - task: ArchiveFiles@2
+    # Step 2: Cache npm packages
+    - task: Cache@2
       inputs:
-        rootFolder: '$(System.DefaultWorkingDirectory)'
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/mern-app.zip'
-        replaceExistingArchive: true
-      displayName: 'Đóng gói dự án'
+        key: 'npm | "$(Agent.OS)" | package-lock.json'
+        restoreKeys: |
+          npm | "$(Agent.OS)"
+        path: $(npm_config_cache)
+      displayName: 'Cache npm packages'
 
-    # Step 9: Xuất Artifact để triển khai
+    # Step 3: Install dependencies for backend
+    - script: |
+        cd backend
+        npm install
+      displayName: 'Install Backend Dependencies'
+
+    # Step 4: Install dependencies for frontend
+    - script: |
+        cd frontend
+        npm install
+      displayName: 'Install Frontend Dependencies'
+
+    # Step 5: Build frontend
+    - script: |
+        cd frontend
+        npm run build
+      displayName: 'Build Frontend'
+
+    # Step 6: Package the application
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          function Create-Zip {
+              param([string]$zipfilename, [string]$sourcedir)
+              if (Test-Path $zipfilename) { Remove-Item $zipfilename }
+              [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename)
+          }
+          Create-Zip "$(Build.ArtifactStagingDirectory)/mern-app.zip" "$(System.DefaultWorkingDirectory)"
+      displayName: 'Package the application'
+
+    # Step 7: Publish the artifact for deployment
     - publish: $(Build.ArtifactStagingDirectory)/mern-app.zip
       artifact: drop
-      displayName: 'Xuất Artifact để triển khai'
+      displayName: 'Publish Artifact'
 
-# 2. Deploy Stage
 - stage: Deploy
   displayName: "Deploy Application"
   dependsOn: Build
-  condition: succeeded()  # Chỉ chạy khi Build thành công
+  condition: succeeded()
   jobs:
   - deployment: DeployToAzure
-    displayName: "Triển khai MERN App lên Azure Web App"
-    environment: $(environmentName)  # Môi trường triển khai
+    displayName: "Deploy MERN App to Azure Web App"
+    environment: $(environmentName)
     pool:
-      name: Self-hosted  # Sử dụng agent tự quản lý
+      name: Self-hosted  # Use self-hosted agent pool
 
     strategy:
       runOnce:
         deploy:
           steps:
-          # Step 1: Triển khai MERN App lên Azure Web App
+          # Step 1: Deploy the application to Azure Web App
           - task: AzureWebApp@1
-            displayName: 'Triển khai MERN App lên Azure Web App'
+            displayName: 'Deploy MERN App to Azure'
             inputs:
               azureSubscription: $(azureSubscription)
-              appType: webAppLinux  # Dịch vụ App Service loại Linux
+              appType: webAppLinux
               appName: $(webAppName)
-              runtimeStack: 'NODE|20-lts'  # Runtime Node.js 20 LTS
+              runtimeStack: 'NODE|18-lts'
               package: '$(Pipeline.Workspace)/drop/mern-app.zip'
-              startUpCommand: 'node backend/server.js --port $(serverPort)'  # Lệnh khởi chạy server
-              appSettings: |
-                WEBSITE_NODE_DEFAULT_VERSION=20-lts
-                MONGO_URI=$(MONGO_URI)
+              startUpCommand: 'node backend/server.js --port $(serverPort)'
 
           # Step 2: Restart Azure Web App
           - task: AzureCLI@2
-            displayName: 'Khởi động lại Azure Web App'
+            displayName: 'Restart Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
               scriptType: bash
