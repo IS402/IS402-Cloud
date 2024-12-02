@@ -133,6 +133,52 @@ const ProductDetailPage = () => {
       console.error("Error in handleAddToCart:", error);
     }
   };
+
+  const handlePayment = async () => {
+    if (!user) {
+      message.warning("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      navigate("/login");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/cart/",
+        {
+          productId: data._id,
+          quantity: 1, // You may adjust the quantity dynamically if needed
+        },
+        { withCredentials: true } // Ensures the cookies are sent with the request
+      );
+      
+      if (response.status === 200) {
+        // message.success("Đã thêm vào giỏ hàng");
+        navigate("/cart")
+      } else {
+        message.error("Không thể thêm vào giỏ hàng");
+      }
+    } catch (error) {
+      if (error.response) {
+        // Handle specific HTTP status codes
+        if (error.response.status === 401) {
+          message.warning("Vui lòng đăng nhập để thêm vào giỏ hàng");
+          navigate("/login");
+        } else if (error.response.status === 400) {
+          message.error("Dữ liệu không hợp lệ");
+        } else if (error.response.status === 404) {
+          message.error("Sản phẩm không tồn tại");
+        } else {
+          message.error(
+            error.response.data?.message || "Đã xảy ra lỗi, vui lòng thử lại sau"
+          );
+        }
+      } else {
+        // Handle network or unexpected errors
+        message.error("Không thể kết nối đến máy chủ");
+      }
+      console.error("Error in handleAddToCart:", error);
+    }
+  };
   
   return (
     <Content style={{ padding: "0 60px" }}>
@@ -723,6 +769,7 @@ const ProductDetailPage = () => {
                   color: whiteColor,
                   backgroundColor: "#EC3C3C",
                 }}
+                onClick={handlePayment}
               >
                 Mua ngay
               </Button>
