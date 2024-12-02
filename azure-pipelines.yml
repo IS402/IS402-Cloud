@@ -6,103 +6,74 @@ variables:
   webAppName: 'wumiibo'  # Azure Web App Name
   environmentName: 'wumiibo'  # Deployment environment
   serverPort: 8080  # Node.js server port
-  nodeVersion: '18.x'  # Node.js version
+  nodeVersion: '20.x'  # Node.js version
 
 stages:
 - stage: Build
-  displayName: "Build Application"
+  displayName: "Build MERN Application"
   jobs:
   - job: BuildJob
-    displayName: "Build and Test"
+    displayName: "Build Job"
     pool:
-      name: Self-hosted  # Use self-hosted agent pool
-      clean: true  # Clean workspace before running
+      name: Self-hosted  # Use your self-hosted agent pool
+      clean: true  # Clean the workspace before running
 
     steps:
-    # Step 1: Install Node.js
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '$(nodeVersion)'
-      displayName: 'Install Node.js'
+    # Step 1: Install Node.js 20 LTS (Ensure it's pre-installed on your self-hosted agent)
+    - script: |
+        node --version
+        npm --version
+      displayName: 'Verify Node.js and npm Installation'
 
-    # Step 2: Cache npm packages
-    - task: Cache@2
-      inputs:
-        key: 'npm | "$(Agent.OS)" | package-lock.json'
-        restoreKeys: |
-          npm | "$(Agent.OS)"
-        path: $(npm_config_cache)
-      displayName: 'Cache npm packages'
-
-    # Step 3: Install dependencies for backend
+    # Step 2: Install dependencies and build backend
     - script: |
         cd backend
         npm install
-      displayName: 'Install Backend Dependencies'
+        npm run build --if-present
+      displayName: 'Install and Build Backend'
 
-    # Step 4: Install dependencies for frontend
+    # Step 3: Install dependencies and build frontend
     - script: |
         cd frontend
         npm install
-      displayName: 'Install Frontend Dependencies'
-
-    # Step 5: Build frontend
-    - script: |
-        cd frontend
         npm run build
-      displayName: 'Build Frontend'
+      displayName: 'Install and Build Frontend'
 
-    # Step 6: Package the application
+    # Step 4: Package the application
     - task: PowerShell@2
       inputs:
         targetType: 'inline'
         script: |
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          function Create-Zip {
-              param([string]$zipfilename, [string]$sourcedir)
-              if (Test-Path $zipfilename) { Remove-Item $zipfilename }
-              [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename)
+          function Create-ZipFile($zipFile, $sourceFolder) {
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($sourceFolder, $zipFile)
           }
-          Create-Zip "$(Build.ArtifactStagingDirectory)/mern-app.zip" "$(System.DefaultWorkingDirectory)"
-      displayName: 'Package the application'
+          Create-ZipFile "$(Build.ArtifactStagingDirectory)/mern-app.zip" "$(System.DefaultWorkingDirectory)"
+      displayName: 'Package the Application'
 
-    # Step 7: Publish the artifact for deployment
+    # Step 5: Publish the artifact for deployment
     - publish: $(Build.ArtifactStagingDirectory)/mern-app.zip
       artifact: drop
-      displayName: 'Publish Artifact'
+      displayName: 'Publish Build Artifact'
 
 - stage: Deploy
-  displayName: "Deploy Application"
+  displayName: "Deploy MERN Application"
   dependsOn: Build
   condition: succeeded()
   jobs:
-  - deployment: DeployToAzure
-    displayName: "Deploy MERN App to Azure Web App"
-    environment: $(environmentName)
+  - job: DeployJob
+    displayName: "Deploy Job"
     pool:
-      name: Self-hosted  # Use self-hosted agent pool
+      name: Self-hosted  # Use your self-hosted agent pool
 
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          # Step 1: Deploy the application to Azure Web App
-          - task: AzureWebApp@1
-            displayName: 'Deploy MERN App to Azure'
-            inputs:
-              azureSubscription: $(azureSubscription)
-              appType: webAppLinux
-              appName: $(webAppName)
-              runtimeStack: 'NODE|18-lts'
-              package: '$(Pipeline.Workspace)/drop/mern-app.zip'
-              startUpCommand: 'node backend/server.js --port $(serverPort)'
-
-          # Step 2: Restart Azure Web App
-          - task: AzureCLI@2
-            displayName: 'Restart Azure Web App'
-            inputs:
-              azureSubscription: $(azureSubscription)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az webapp restart --name $(webAppName) --resource-group 'Wumiibo'
+    steps:
+    # Step 1: Deploy the app to Azure Web App
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appType: webAppLinux
+        appName: $(webAppName)
+        runtimeStack: 'NODE|20-lts'
+        package: '$(Pipeline.Workspace)/drop/mern-app.zip'
+        startUpCommand: 'node backend/server.js --port $(serverPort)'
+      displayName: 'Deploy MERN App to Azure'
