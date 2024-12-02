@@ -6,51 +6,60 @@ variables:
   webAppName: 'wumiibo'  # Azure Web App name
   environmentName: 'wumiibo'  # Deployment environment
   serverPort: 8080  # Port for Node.js server
+  MONGO_URI: 'MONGO_URI=mongodb+srv://21521226:2pEuylAyShJli4CW@is402.rfbnw.mongodb.net/products?retryWrites=true&w=majority&appName=IS402'  # MongoDB connection string
 
 stages:
 # 1. Build Stage
 - stage: Build
   displayName: "Build Application"
   jobs:
-  - job: BuildBackend
-    displayName: "Build and Test Backend"
+  - job: BuildApp
+    displayName: "Build and Test Backend and Frontend"
     pool:
       name: Self-hosted  # Use Self-hosted Agent Pool
       clean: true  # Clean the working directory before the job runs
+
     steps:
-    # Install Node.js 20
+    # Step 1: Install Node.js 20
     - task: NodeTool@0
       inputs:
         versionSpec: '20.x'  # Install Node.js version 20
       displayName: 'Install Node.js 20'
 
-    # Update npm to the latest version
+    # Step 2: Update npm to the latest version
     - script: |
         npm install -g npm@latest
         npm --version
       displayName: 'Update npm to the latest version'
 
-    # Install dependencies and build backend
+    # Step 3: Install and Build Backend
     - script: |
         cd backend
         npm install
         npm run build --if-present
       displayName: 'Install dependencies and build backend'
 
-    # Archive backend into an artifact
+    # Step 4: Install and Build Frontend
+    - script: |
+        cd frontend
+        npm install
+        npm run build  # Build React frontend
+      displayName: 'Install dependencies and build frontend'
+
+    # Step 5: Archive Backend and Frontend into an Artifact
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'  # Archive root directory
         includeRootFolder: false
         archiveType: zip
-        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/mern-app.zip'
         replaceExistingArchive: true
-      displayName: 'Archive Backend'
+      displayName: 'Archive Backend and Frontend'
 
-    # Publish artifact
-    - publish: $(Build.ArtifactStagingDirectory)/backend.zip
+    # Step 6: Publish Artifact
+    - publish: $(Build.ArtifactStagingDirectory)/mern-app.zip
       artifact: drop
-      displayName: 'Publish Backend Artifact'
+      displayName: 'Publish Artifact for Deployment'
 
 # 2. Deploy Stage
 - stage: Deploy
@@ -59,7 +68,7 @@ stages:
   condition: succeeded()  # Only run if Build stage is successful
   jobs:
   - deployment: DeployToAzure
-    displayName: "Deploy Backend to Azure Web App"
+    displayName: "Deploy MERN App to Azure Web App"
     environment: $(environmentName)  # Deployment environment
     pool:
       name: Self-hosted  # Use Self-hosted Agent Pool
@@ -68,13 +77,25 @@ stages:
       runOnce:
         deploy:
           steps:
-          # Deploy backend to Azure Web App
+          # Step 7: Deploy Backend and Frontend to Azure Web App
           - task: AzureWebApp@1
-            displayName: 'Deploy Backend to Azure Web App'
+            displayName: 'Deploy MERN App to Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux  # App Service type is Linux
               appName: $(webAppName)
               runtimeStack: 'NODE|20-lts'  # Node.js 20 LTS runtime
-              package: '$(Pipeline.Workspace)/drop/backend.zip'
-              startUpCommand: 'node server.js --port $(serverPort)'  # Command to start the server
+              package: '$(Pipeline.Workspace)/drop/mern-app.zip'
+              startUpCommand: 'node backend/server.js --port $(serverPort)'  # Command to start the server
+              appSettings: |
+                -WEBSITE_NODE_DEFAULT_VERSION=20-lts
+                -MONGO_URI=$(MONGO_URI)
+
+          # Step 8: Restart Azure Web App
+          - task: AzureCLI@2
+            displayName: 'Restart Azure Web App'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: az webapp restart --name $(webAppName) --resource-group 'Wumiibo'
