@@ -1,0 +1,80 @@
+trigger:
+  - main  # Trigger pipeline khi có thay đổi trên nhánh 'main'
+
+variables:
+  azureSubscription: '974ba5ab-9bc7-41c9-84ac-d53863572299'  # Subscription Azure
+  webAppName: 'wumiibo'  # Tên Azure Web App
+  environmentName: 'wumiibo'  # Môi trường deployment
+  serverPort: 8080  # Port của server Node.js
+
+stages:
+# 1. Build Stage
+- stage: Build
+  displayName: "Build Application"
+  jobs:
+  - job: BuildBackend
+    displayName: "Build and Test Backend"
+    pool:
+      name: Self-hosted  # Sử dụng Self-hosted Agent Pool
+
+    steps:
+    # Cài đặt Node.js 20
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'  # Cài đặt Node.js phiên bản 20
+      displayName: 'Install Node.js 20'
+
+    # Cập nhật npm lên phiên bản mới nhất
+    - script: |
+        npm install -g npm@latest
+        npm --version
+      displayName: 'Update npm to latest version'
+
+    # Cài đặt dependencies, build, và test backend  
+    - script: |
+        cd backend
+        npm install
+        npm run build --if-present  
+      displayName: 'Install dependencies, build, and test backend'
+
+    # Đóng gói backend thành artifact
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+        replaceExistingArchive: true
+      displayName: 'Archive Backend'
+
+    # Publish artifact
+    - publish: $(Build.ArtifactStagingDirectory)/backend.zip
+      artifact: drop
+      displayName: 'Publish Backend Artifact'
+
+# 2. Deploy Stage
+- stage: Deploy
+  displayName: "Deploy Application"
+  dependsOn: Build
+  condition: succeeded()  # Chỉ chạy nếu stage Build thành công
+  jobs:
+  - deployment: DeployToAzure
+    displayName: "Deploy Backend to Azure Web App"
+    environment: $(environmentName)  # Tên môi trường deployment
+    pool:
+      name: Self-hosted  # Sử dụng Self-hosted Agent Pool
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Deploy ứng dụng đến Azure Web App
+          - task: AzureWebApp@1
+            displayName: 'Deploy Backend to Azure Web App'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: webAppLinux  # Loại App Service là Linux
+              appName: $(webAppName)
+              runtimeStack: 'NODE|20-lts'  # Runtime stack Node.js 20 LTS
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+              startUpCommand: 'node server.js --port $(serverPort)'  # Command để khởi chạy server

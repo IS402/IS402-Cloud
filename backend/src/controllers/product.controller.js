@@ -1,5 +1,4 @@
 import { redis } from "../lib/redis.js";
-import cloudinary from "../lib/cloudinary.js";
 import Product from "../model/product.model.js";
 import Category from "../model/category.model.js";
 import Brand from "../model/brand.model.js";
@@ -165,16 +164,6 @@ export const deleteProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
-    }
-
-    if (product.image) {
-      const publicId = product.image.split("/").pop().split(".")[0];
-      try {
-        await cloudinary.uploader.destroy(`products/${publicId}`);
-        console.log("deleted image from cloduinary");
-      } catch (error) {
-        console.log("error deleting image from cloduinary", error);
-      }
     }
 
     await Product.findByIdAndDelete(req.params.id);

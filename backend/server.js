@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import path from "path";
-import cloudinary from './src/lib/cloudinary.js';
+
 
 // Import routes and database connection
 import authRoutes from "./src/routes/auth.route.js";
