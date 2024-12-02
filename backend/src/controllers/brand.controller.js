@@ -1,6 +1,5 @@
 import Brand from "../model/brand.model.js";
 import { redis } from "../lib/redis.js";
-import cloudinary from "../lib/cloudinary.js";
 
 export const getAllBrands = async (req, res) => {
   try {
@@ -29,16 +28,10 @@ export const createBrand = async (req, res) => {
   try {
     const { name, description, image } = req.body;
 
-    let cloudinaryResponse = null;
-
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "brands" });
-    }
-
     const brand = await Brand.create({
       name,
       description,
-      image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
+      image,
     });
 
     await redis.del("brands");
@@ -59,15 +52,9 @@ export const updateBrand = async (req, res) => {
 
     const { name, description, image } = req.body;
 
-    let cloudinaryResponse = null;
-
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "brands" });
-    }
-
     brand.name = name;
     brand.description = description;
-    brand.image = cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : brand.image;
+    brand.image = image || brand.image;
 
     const updatedBrand = await brand.save();
 
@@ -86,16 +73,6 @@ export const deleteBrand = async (req, res) => {
     const brand = await Brand.findByIdAndDelete(req.params.id);
     if (!brand) {
       return res.status(404).json({ message: "Brand not found" });
-    }
-
-    if (brand.image) {
-      const publicId = brand.image.split("/").pop().split(".")[0];
-      try {
-        await cloudinary.uploader.destroy(`brands/${publicId}`);
-        console.log("deleted image from cloudinary");
-      } catch (error) {
-        console.log("error deleting image from cloudinary", error);
-      }
     }
 
     await redis.del(`brand:${req.params.id}`);

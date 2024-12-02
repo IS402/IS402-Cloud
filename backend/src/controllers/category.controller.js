@@ -1,6 +1,6 @@
 import Category from "../model/category.model.js";
 import { redis } from "../lib/redis.js";
-import cloudinary from "../lib/cloudinary.js";
+
 
 export const getAllCategories = async (req, res) => {
   try {
@@ -46,18 +46,13 @@ export const getProductByCategory = async (req, res) => {
 export const createCategory = async (req, res) => {
   try {
     const { name, description,slug, image } = req.body;
-
-    let cloudinaryResponse = null;
-
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "categories" });
-    }
+  
 
     const category = await Category.create({
       name,
       description,
       slug,
-      image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
+      image,
     });
 
     await redis.del("categories");
@@ -78,16 +73,12 @@ export const updateCategory = async (req, res) => {
 
     const { name, description, slug, image } = req.body;
 
-    let cloudinaryResponse = null;
-
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "categories" });
-    }
+    
 
     category.name = name;
     category.description = description;
     category.slug=slug;
-    category.image = cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : category.image;
+    category.image = image || category.image;
 
     const updatedCategory = await category.save();
 
