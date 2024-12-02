@@ -6,7 +6,7 @@ variables:
   webAppName: 'wumiibo'  # Azure Web App name
   environmentName: 'wumiibo'  # Deployment environment
   serverPort: 8080  # Port for Node.js server
-  MONGO_URI: 'MONGO_URI=mongodb+srv://21521226:2pEuylAyShJli4CW@is402.rfbnw.mongodb.net/products?retryWrites=true&w=majority&appName=IS402'  # MongoDB connection string
+  MONGO_URI: 'mongodb+srv://21521226:2pEuylAyShJli4CW@is402.rfbnw.mongodb.net/products?retryWrites=true&w=majority&appName=IS402'  # MongoDB connection string
 
 stages:
 # 1. Build Stage
