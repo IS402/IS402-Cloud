@@ -88,8 +88,8 @@ stages:
               package: '$(Pipeline.Workspace)/drop/mern-app.zip'
               startUpCommand: 'node backend/server.js --port $(serverPort)'  # Command to start the server
               appSettings: |
-                -WEBSITE_NODE_DEFAULT_VERSION=20-lts
-                -MONGO_URI=$(MONGO_URI)
+                WEBSITE_NODE_DEFAULT_VERSION=20-lts 
+                MONGO_URI=$(MONGO_URI)
 
           # Step 8: Restart Azure Web App
           - task: AzureCLI@2
