@@ -60,7 +60,7 @@ stages:
       displayName: Deploy to Azure Web App
       inputs:
         azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
-        scriptType: bash
+        scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
           az webapp config container set \
