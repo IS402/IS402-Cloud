@@ -4,8 +4,10 @@ trigger:
       - main  # Kích hoạt pipeline khi có thay đổi trên nhánh 'main'
 
 variables:
+  group: SECRET_KEY
   # Tên Azure Container Registry
   ACR_NAME: wumiibo
+  
   # Tên các image
   FRONTEND_IMAGE: is402-frontend
   BACKEND_IMAGE: is402-backend
