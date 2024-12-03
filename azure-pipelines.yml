@@ -4,17 +4,23 @@ trigger:
       - main  # Kích hoạt pipeline khi có thay đổi trên nhánh 'main'
 
 variables:
-  group: SECRET_KEY
+  - group: SECRET_KEY
   # Tên Azure Container Registry
-  ACR_NAME: wumiibo
+  - name: ACR_NAME
+    value: wumiibo
   
-  # Tên các image
-  FRONTEND_IMAGE: is402-frontend
-  BACKEND_IMAGE: is402-backend
-  MONGO_IMAGE: mongo
-  # Azure Web App và Resource Group
-  APP_NAME: wumiibo  # Tên Azure Web App
-  RESOURCE_GROUP: Wumiibo  # Resource group chứa Azure Web App
+  - name: FRONTEND_IMAGE
+    value: is402-frontend
+  - name: BACKEND_IMAGE
+    value: is402-backend
+  - name: MONGO_IMAGE
+    value: mongo
+  
+  # Azure resources
+  - name: APP_NAME
+    value: wumiibo    # Azure Web App name
+  - name: RESOURCE_GROUP
+    value: Wumiibo    # Resource group containing Azure Web App
 
 stages:
 - stage: BuildAndPush
