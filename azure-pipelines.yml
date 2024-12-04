@@ -26,7 +26,7 @@ stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: 'Self-hosted 1' # Sử dụng agent Microsoft-hosted
+    name: 'Microsoft-hosted' # Sử dụng agent Microsoft-hosted
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -59,7 +59,7 @@ stages:
 - stage: Deploy
   displayName: Deploy to Azure Web App
   pool:
-    name: 'Self-hosted 1'  # Sử dụng agent Microsoft-hosted
+    name: 'Microsoft-hosted'  # Sử dụng agent Microsoft-hosted
   jobs:
   - job: Deploy
     displayName: Deploy Containers to Azure Web App
