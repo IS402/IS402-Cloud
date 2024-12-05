@@ -1,0 +1,20 @@
+version: '3.8'
+name: is402
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}  # Pass MongoDB Atlas connection string at runtime
+    ports:
+      - "5000:5000"
+    networks:
+      - is402
+
+networks:
+  is402:
+    driver: bridge

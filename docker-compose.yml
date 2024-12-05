@@ -1,29 +1,34 @@
-version: '3.8'
+
+
 services:
   frontend:
-    image: wumiibo.azurecr.io/frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app         # Mount the React source code for live reload
+      - /app/node_modules       # Preserve node_modules in the container
     ports:
-      - "3000:3000"
+      - "3000:3000"             # Map React development server port
+    command: ["npm", "start"]   # Start the React development server
     environment:
-      - REACT_APP_BACKEND_URL=http://backend:5000  # URL kết nối tới backend container
-    depends_on:
-      - backend
+      - NODE_OPTIONS=--openssl-legacy-provider
+      - CHOKIDAR_USEPOLLING=true  # For reliable hot reloading in Docker
+
 
   backend:
-    image: wumiibo.azurecr.io/backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env  # Load MongoDB Atlas connection string
     ports:
       - "5000:5000"
-    environment:
-      - DATABASE_URL=mongodb://mongo:27017/mydatabase  # URL kết nối tới MongoDB container
-    depends_on:
-      - mongo
+    networks:
+      - is402
 
-  mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=21521226
-      - MONGO_INITDB_ROOT_PASSWORD=Nhat22082003
-    volumes:
-      - /mnt/data/mongo:/data/db
+networks:
+  is402:
+    driver: bridge

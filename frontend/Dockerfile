@@ -1,30 +1,23 @@
-# Base image
+# Use the Node.js base image
 FROM node:18
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json và package-lock.json vào container
+# Copy package.json and package-lock.json into the container
 COPY package*.json ./
 
-# Cài đặt dependencies
+# Install all dependencies
 RUN npm install
 
-# Copy toàn bộ mã nguồn vào container
+# Copy the entire source code into the container
 COPY . .
 
-# Set biến môi trường để sửa lỗi OpenSSL
+# Set environment variables for React (e.g., OpenSSL compatibility)
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
-# Build ứng dụng React
-RUN npm run build
+# Expose the React development server port
+EXPOSE 3000
 
-# Sử dụng Nginx để phục vụ ứng dụng React
-FROM nginx:1.21
-COPY --from=0 /app/build /usr/share/nginx/html
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+# Start the React development server
+CMD ["npm", "start"]

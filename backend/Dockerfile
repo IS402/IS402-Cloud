@@ -1,22 +1,24 @@
+# Dockerfile
+
 # Base image
 FROM node:18
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json và package-lock.json vào container
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Cài đặt dependencies
-RUN npm install
+# Install production dependencies only
+RUN npm ci --only=production
 
-# Copy toàn bộ mã nguồn backend vào container
+# Copy application source code
 COPY . .
 
-# Copy file .env vào container
-COPY .env .env
+# Set environment to production
+ENV NODE_ENV=production
 
-# Expose port
+# Expose production port
 EXPOSE 5000
 
 # Start server

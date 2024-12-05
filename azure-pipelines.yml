@@ -1,32 +1,26 @@
 trigger:
   branches:
     include:
-      - main  # Kích hoạt pipeline khi có thay đổi trên nhánh 'main'
+      - main
 
 variables:
   - group: SECRET_KEY
-  # Tên Azure Container Registry
   - name: ACR_NAME
     value: wumiibo
-  
   - name: FRONTEND_IMAGE
     value: is402-frontend
   - name: BACKEND_IMAGE
     value: is402-backend
-  - name: MONGO_IMAGE
-    value: mongo
-  
-  # Azure resources
   - name: APP_NAME
-    value: wumiibo    # Azure Web App name
+    value: wumiibo
   - name: RESOURCE_GROUP
-    value: Wumiibo    # Resource group containing Azure Web App
+    value: Wumiibo
 
 stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: 'Microsoft-hosted' # Sử dụng agent Microsoft-hosted
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -34,38 +28,32 @@ stages:
     - task: AzureCLI@2
       displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299 # Service Connection đến Azure
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
         scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
           az acr login --name $(ACR_NAME)
 
     - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest -f frontend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest
+        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) -f frontend/Dockerfile .
+        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
       displayName: Build and Push Frontend Image
 
     - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest -f backend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest
+        docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) -f backend/Dockerfile .
+        docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
       displayName: Build and Push Backend Image
-
-    - script: |
-        docker pull mongo:latest
-        docker tag mongo:latest $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
-        docker push $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
-      displayName: Push MongoDB Image
 
 - stage: Deploy
   displayName: Deploy to Azure Web App
   pool:
-    name: 'Microsoft-hosted'  # Sử dụng agent Microsoft-hosted
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: Deploy
     displayName: Deploy Containers to Azure Web App
     steps:
     - task: AzureCLI@2
-      displayName: Deploy to Azure Web App
+      displayName: Deploy Frontend and Backend Containers
       inputs:
         azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
         scriptType: ps
@@ -74,7 +62,15 @@ stages:
           az webapp config container set `
             --name $(APP_NAME) `
             --resource-group $(RESOURCE_GROUP) `
-            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest `
+            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) `
+            --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
+            --docker-registry-server-user $(AZURE_ACR_USERNAME) `
+            --docker-registry-server-password $(AZURE_ACR_PASSWORD)
+
+          az webapp config container set `
+            --name $(APP_NAME)-backend `
+            --resource-group $(RESOURCE_GROUP) `
+            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) `
             --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
             --docker-registry-server-user $(AZURE_ACR_USERNAME) `
             --docker-registry-server-password $(AZURE_ACR_PASSWORD)
