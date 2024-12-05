@@ -1,26 +1,30 @@
 trigger:
   branches:
     include:
-      - main
+      - main  # Trigger the pipeline on changes to the main branch
 
 variables:
-  - group: SECRET_KEY
+  - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
   - name: ACR_NAME
     value: wumiibo
   - name: FRONTEND_IMAGE
     value: is402-frontend
   - name: BACKEND_IMAGE
     value: is402-backend
-  - name: APP_NAME
+  - name: APP_NAME_DEV
+    value: wumiibo-dev
+  - name: APP_NAME_PROD
     value: wumiibo
-  - name: RESOURCE_GROUP
+  - name: RESOURCE_GROUP_DEV
+    value: Wumiibo-Dev
+  - name: RESOURCE_GROUP_PROD
     value: Wumiibo
 
 stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: Self-hosted 1
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -44,33 +48,50 @@ stages:
         docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
       displayName: Build and Push Backend Image
 
-- stage: Deploy
-  displayName: Deploy to Azure Web App
+- stage: DeployDev
+  displayName: Deploy to Development Environment
   pool:
-    name: Self-hosted 1
+    vmImage: 'ubuntu-latest'
   jobs:
-  - job: Deploy
-    displayName: Deploy Containers to Azure Web App
+  - job: DeployDev
+    displayName: Deploy Containers to Development
     steps:
     - task: AzureCLI@2
-      displayName: Deploy Frontend and Backend Containers
+      displayName: Deploy Development Containers
       inputs:
         azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
-        scriptType: ps
+        scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          az webapp config container set `
-            --name $(APP_NAME) `
-            --resource-group $(RESOURCE_GROUP) `
-            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) `
-            --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
-            --docker-registry-server-user $(AZURE_ACR_USERNAME) `
-            --docker-registry-server-password $(AZURE_ACR_PASSWORD)
+          # Login to Azure Container Registry
+          az acr login --name $(ACR_NAME)
 
-          az webapp config container set `
-            --name $(APP_NAME)-backend `
-            --resource-group $(RESOURCE_GROUP) `
-            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) `
-            --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
-            --docker-registry-server-user $(AZURE_ACR_USERNAME) `
-            --docker-registry-server-password $(AZURE_ACR_PASSWORD)
+          # Export the MONGO_URI for development from secrets
+          export MONGO_URI=$(MONGO_URI_DEV)
+
+          # Deploy containers using docker-compose.prod.yml for the development environment
+          MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
+
+- stage: DeployProd
+  displayName: Deploy to Production Environment
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: DeployProd
+    displayName: Deploy Containers to Production
+    steps:
+    - task: AzureCLI@2
+      displayName: Deploy Production Containers
+      inputs:
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          # Login to Azure Container Registry
+          az acr login --name $(ACR_NAME)
+
+          # Export the MONGO_URI for production from secrets
+          export MONGO_URI=$(MONGO_URI_PROD)
+
+          # Deploy containers using docker-compose.prod.yml for the production environment
+          MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
