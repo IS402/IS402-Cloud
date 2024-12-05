@@ -12,13 +12,11 @@ variables:
   - name: BACKEND_IMAGE
     value: is402-backend
   - name: APP_NAME_DEV
-    value: wumiibo-dev
+    value: wumiibo-dev  # Development Azure Web App
   - name: APP_NAME_PROD
-    value: wumiibo
-  - name: RESOURCE_GROUP_DEV
-    value: Wumiibo-Dev
-  - name: RESOURCE_GROUP_PROD
-    value: Wumiibo
+    value: wumiibo       # Production Azure Web App
+  - name: RESOURCE_GROUP
+    value: Wumiibo       # Single resource group for both environments
 
 stages:
 - stage: BuildAndPush
@@ -66,10 +64,10 @@ stages:
           # Login to Azure Container Registry
           az acr login --name $(ACR_NAME)
 
-          # Export the MONGO_URI for development from secrets
-          export MONGO_URI=$(MONGO_URI_DEV)
+          # Export the MONGO_URI from secrets
+          export MONGO_URI=$(MONGO_URI)
 
-          # Deploy containers using docker-compose.prod.yml for the development environment
+          # Deploy containers using docker-compose.prod.yml for development
           MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
 
 - stage: DeployProd
@@ -90,8 +88,8 @@ stages:
           # Login to Azure Container Registry
           az acr login --name $(ACR_NAME)
 
-          # Export the MONGO_URI for production from secrets
-          export MONGO_URI=$(MONGO_URI_PROD)
+          # Export the MONGO_URI from secrets
+          export MONGO_URI=$(MONGO_URI)
 
-          # Deploy containers using docker-compose.prod.yml for the production environment
+          # Deploy containers using docker-compose.prod.yml for production
           MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
