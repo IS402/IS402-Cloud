@@ -24,7 +24,8 @@ stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: Self-hosted 1
+    name: Azure Pipelines
+    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -51,7 +52,8 @@ stages:
 - stage: DeployDev
   displayName: Deploy to Development Environment
   pool:
-    name: Self-hosted 1
+    name: Azure Pipelines
+    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
   jobs:
   - job: DeployDev
     displayName: Deploy Containers to Development
@@ -75,7 +77,8 @@ stages:
 - stage: DeployProd
   displayName: Deploy to Production Environment
   pool:
-    name: Self-hosted 1
+    name: Azure Pipelines
+    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
   jobs:
   - job: DeployProd
     displayName: Deploy Containers to Production
