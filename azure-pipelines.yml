@@ -24,7 +24,7 @@ stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    vmImage: 'ubuntu-latest'
+    name: Self-hosted 1
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -51,7 +51,7 @@ stages:
 - stage: DeployDev
   displayName: Deploy to Development Environment
   pool:
-    vmImage: 'ubuntu-latest'
+    name: Self-hosted 1
   jobs:
   - job: DeployDev
     displayName: Deploy Containers to Development
@@ -75,7 +75,7 @@ stages:
 - stage: DeployProd
   displayName: Deploy to Production Environment
   pool:
-    vmImage: 'ubuntu-latest'
+    name: Self-hosted 1
   jobs:
   - job: DeployProd
     displayName: Deploy Containers to Production
