@@ -4,6 +4,8 @@ trigger:
       - main  # Trigger the pipeline on changes to the main branch
 
 variables:
+  - name: azureSubscription
+    value: AzureForStudents-Wumiibo-Connection
   - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
   - name: ACR_NAME
     value: wumiibo
@@ -30,7 +32,7 @@ stages:
     - task: AzureCLI@2
       displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
+        azureSubscription: AzureForStudents-Wumiibo-Connection
         scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
@@ -57,7 +59,7 @@ stages:
     - task: AzureCLI@2
       displayName: Deploy Development Containers
       inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
+        azureSubscription: AzureForStudents-Wumiibo-Connection
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
@@ -81,7 +83,7 @@ stages:
     - task: AzureCLI@2
       displayName: Deploy Production Containers
       inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
+        azureSubscription: AzureForStudents-Wumiibo-Connection
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
