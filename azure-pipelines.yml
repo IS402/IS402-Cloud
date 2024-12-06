@@ -34,6 +34,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
+          az login --scope https://management.core.windows.net//.default
           az acr login --name $(ACR_NAME)
         pwsh: true
 
