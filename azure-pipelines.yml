@@ -5,7 +5,7 @@ trigger:
 
 variables:
   - name: azureSubscription
-    value: 'c4223a0b-6719-4c48-a291-1c557fda900e'
+    value: '974ba5ab-9bc7-41c9-84ac-d53863572299'
   - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
   - name: ACR_NAME
     value: wumiibo
