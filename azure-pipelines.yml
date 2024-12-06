@@ -24,77 +24,85 @@ stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
   pool:
-    name: Azure Pipelines
-    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
+    name: "Self-hosted 1"  # Use your self-hosted agent pool
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
     steps:
-    - task: AzureCLI@2
+    - task: PowerShell@2
       displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: AzureForStudents-Wumiibo-Connection
-        scriptType: ps
-        scriptLocation: inlineScript
-        inlineScript: |
+        targetType: 'inline'
+        script: |
           az acr login --name $(ACR_NAME)
+        pwsh: true
 
-    - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) -f frontend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
+    - task: PowerShell@2
       displayName: Build and Push Frontend Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) -f frontend/Dockerfile .
+          docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
+        pwsh: true
 
-    - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) -f backend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
+    - task: PowerShell@2
       displayName: Build and Push Backend Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) -f backend/Dockerfile .
+          docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
+        pwsh: true
 
 - stage: DeployDev
   displayName: Deploy to Development Environment
   pool:
-    name: Azure Pipelines
-    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
+    name: "Self-hosted 1"
   jobs:
   - job: DeployDev
     displayName: Deploy Containers to Development
     steps:
-    - task: AzureCLI@2
+    - task: PowerShell@2
       displayName: Deploy Development Containers
       inputs:
-        azureSubscription: AzureForStudents-Wumiibo-Connection
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
+        targetType: 'inline'
+        script: |
           # Login to Azure Container Registry
           az acr login --name $(ACR_NAME)
 
-          # Export the MONGO_URI from secrets
-          export MONGO_URI=$(MONGO_URI)
+          # Set environment variables
+          $env:MONGO_URI = "$(MONGO_URI)"
 
-          # Deploy containers using docker-compose.prod.yml for development
-          MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
+          # Deploy containers using docker-compose
+          docker-compose -f docker-compose.prod.yml up --build -d
+        pwsh: true
 
-- stage: DeployProd
-  displayName: Deploy to Production Environment
+- stage: DeployToKubernetes
+  displayName: Deploy to Kubernetes
   pool:
-    name: Azure Pipelines
-    vmImage: ubuntu-latest  # Choose the appropriate virtual machine image
+    name: "Self-hosted 1"
   jobs:
-  - job: DeployProd
-    displayName: Deploy Containers to Production
+  - job: DeployToAKS
+    displayName: Deploy to Azure Kubernetes Service
     steps:
-    - task: AzureCLI@2
-      displayName: Deploy Production Containers
+    - task: PowerShell@2
+      displayName: Deploy to Kubernetes
       inputs:
-        azureSubscription: AzureForStudents-Wumiibo-Connection
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          # Login to Azure Container Registry
-          az acr login --name $(ACR_NAME)
-
-          # Export the MONGO_URI from secrets
-          export MONGO_URI=$(MONGO_URI)
-
-          # Deploy containers using docker-compose.prod.yml for production
-          MONGO_URI=$MONGO_URI docker-compose -f docker-compose.prod.yml up --build -d
+        targetType: 'inline'
+        script: |
+          # Login to Azure 
+          az login
+          
+          # Set Kubernetes context
+          az aks get-credentials -n your-aks-cluster-name -g $(RESOURCE_GROUP)
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/deployment.yaml
+          
+          # Update image for frontend
+          kubectl set image deployment/frontend-deployment frontend=$(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
+          
+          # Update image for backend
+          kubectl set image deployment/backend-deployment backend=$(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
+        pwsh: true
