@@ -1,26 +1,44 @@
 trigger:
   branches:
     include:
-      - main  # Kích hoạt pipeline khi có thay đổi trên nhánh 'main'
+      - main  # Trigger pipeline on changes to the 'main' branch
 
 variables:
   group: SECRET_KEY
-  # Tên Azure Container Registry
-  ACR_NAME: wumiibo
+  # New Azure Container Registry Name
+  ACR_NAME: wumiibo-2
   
-  # Tên các image
+  # Image names
   FRONTEND_IMAGE: is402-frontend
   BACKEND_IMAGE: is402-backend
   MONGO_IMAGE: mongo
-  # Azure Web App và Resource Group
-  APP_NAME: wumiibo  # Tên Azure Web App
-  RESOURCE_GROUP: Wumiibo  # Resource group chứa Azure Web App
+  # Azure Web App and Resource Group
+  APP_NAME: wumiibo  # Azure Web App name
+  RESOURCE_GROUP: Wumiibo  # Resource group containing Azure Web App
 
 stages:
+- stage: SetupACR
+  displayName: Create New Azure Container Registry
+  jobs:
+  - job: CreateACR
+    displayName: Create Azure Container Registry
+    steps:
+    - task: AzureCLI@2
+      displayName: Create Azure Container Registry
+      inputs:
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299  # Service Connection to Azure
+        scriptType: ps
+        scriptLocation: inlineScript
+        inlineScript: |
+          az acr create `
+            --name $(ACR_NAME) `
+            --resource-group $(RESOURCE_GROUP) `
+            --sku Basic `
+            --admin-enabled true
+
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
-  pool:
-    name: 'Self-hosted 1' # Sử dụng agent Microsoft-hosted
+  dependsOn: SetupACR  # Ensure ACR is created before this stage
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
@@ -28,7 +46,7 @@ stages:
     - task: AzureCLI@2
       displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299 # Service Connection đến Azure
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
         scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
@@ -46,10 +64,10 @@ stages:
         docker tag mongo:latest $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
         docker push $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
       displayName: Push MongoDB Image
+
 - stage: Deploy
   displayName: Deploy to Azure Web App
-  pool:
-    name: 'Self-hosted 1'  # Sử dụng agent Microsoft-hosted
+  dependsOn: BuildAndPush  # Ensure images are pushed before this stage
   jobs:
   - job: Deploy
     displayName: Deploy Containers to Azure Web App
