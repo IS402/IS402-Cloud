@@ -6,7 +6,7 @@ trigger:
 variables:
   group: SECRET_KEY
   # New Azure Container Registry Name
-  ACR_NAME: wumiibo-2
+  ACR_NAME: wumiibomain
   
   # Image names
   FRONTEND_IMAGE: is402-frontend
