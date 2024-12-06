@@ -22,6 +22,8 @@ stages:
   jobs:
   - job: CreateACR
     displayName: Create Azure Container Registry
+    pool:
+      name: Self-hosted 1
     steps:
     - task: AzureCLI@2
       displayName: Create Azure Container Registry
@@ -42,6 +44,8 @@ stages:
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
+    pool:
+      name: Self-hosted 1
     steps:
     - task: AzureCLI@2
       displayName: Login to Azure Container Registry
@@ -71,6 +75,8 @@ stages:
   jobs:
   - job: Deploy
     displayName: Deploy Containers to Azure Web App
+    pool:
+      name: Self-hosted 1
     steps:
     - task: AzureCLI@2
       displayName: Deploy to Azure Web App
