@@ -1,127 +1,70 @@
 trigger:
   branches:
     include:
-      - main  # Trigger the pipeline on changes to the main branch
+      - main  # Kích hoạt pipeline khi có thay đổi trên nhánh 'main'
 
 variables:
-  - name: azureSubscription
-    value: '974ba5ab-9bc7-41c9-84ac-d53863572299'
-  - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
-  - name: ACR_NAME
-    value: wumiibo
-  - name: FRONTEND_IMAGE
-    value: is402-frontend
-  - name: BACKEND_IMAGE
-    value: is402-backend
-  - name: APP_NAME_DEV
-    value: wumiibo-dev  # Development Azure Web App
-  - name: APP_NAME_PROD
-    value: wumiibo       # Production Azure Web App
-  - name: RESOURCE_GROUP
-    value: Wumiibo       # Single resource group for both environments
-  - name: AKS_CLUSTER_NAME
-    value: wumiibo-aks  # Replace with your actual AKS cluster name
-
-pool:
-  name: "Self-hosted 1"  # Use your self-hosted agent pool
+  group: SECRET_KEY
+  # Tên Azure Container Registry
+  ACR_NAME: wumiibo
+  
+  # Tên các image
+  FRONTEND_IMAGE: is402-frontend
+  BACKEND_IMAGE: is402-backend
+  MONGO_IMAGE: mongo
+  # Azure Web App và Resource Group
+  APP_NAME: wumiibo  # Tên Azure Web App
+  RESOURCE_GROUP: Wumiibo  # Resource group chứa Azure Web App
 
 stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
+  pool:
+    name: 'Self-hosted 1' # Sử dụng agent Microsoft-hosted
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
     steps:
     - task: AzureCLI@2
-      displayName: Azure Login and ACR Login
+      displayName: Login to Azure Container Registry
       inputs:
-        azureSubscription: $(azureSubscription)
-        scriptType: 'ps'
-        scriptLocation: 'inlineScript'
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299 # Service Connection đến Azure
+        scriptType: ps
+        scriptLocation: inlineScript
         inlineScript: |
-          az account show
           az acr login --name $(ACR_NAME)
-
-    - task: Docker@2
+    - script: |
+        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest -f frontend/Dockerfile .
+        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest
       displayName: Build and Push Frontend Image
-      inputs:
-        containerRegistry: $(ACR_NAME)
-        repository: $(FRONTEND_IMAGE)
-        command: 'buildAndPush'
-        Dockerfile: 'frontend/Dockerfile'
-        tags: |
-          $(Build.BuildId)
-          latest
-
-    - task: Docker@2
+    - script: |
+        docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest -f backend/Dockerfile .
+        docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest
       displayName: Build and Push Backend Image
-      inputs:
-        containerRegistry: $(ACR_NAME)
-        repository: $(BACKEND_IMAGE)
-        command: 'buildAndPush'
-        Dockerfile: 'backend/Dockerfile'
-        tags: |
-          $(Build.BuildId)
-          latest
-
-- stage: DeployDev
-  displayName: Deploy to Development Environment
+    - script: |
+        docker pull mongo:latest
+        docker tag mongo:latest $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
+        docker push $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
+      displayName: Push MongoDB Image
+- stage: Deploy
+  displayName: Deploy to Azure Web App
+  pool:
+    name: 'Self-hosted 1'  # Sử dụng agent Microsoft-hosted
   jobs:
-  - job: DeployDev
-    displayName: Deploy Containers to Development
+  - job: Deploy
+    displayName: Deploy Containers to Azure Web App
     steps:
     - task: AzureCLI@2
-      displayName: Deploy Development Containers
+      displayName: Deploy to Azure Web App
       inputs:
-        azureSubscription: $(azureSubscription)
-        scriptType: 'ps'
-        scriptLocation: 'inlineScript'
+        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
+        scriptType: ps
+        scriptLocation: inlineScript
         inlineScript: |
-          # Ensure ACR login
-          az acr login --name $(ACR_NAME)
-
-          # Set environment variables securely
-          $env:MONGO_URI = "$(MONGO_URI)"
-
-          # Use docker-compose or alternative deployment method
-          docker-compose -f docker-compose.prod.yml down
-          docker-compose -f docker-compose.prod.yml up -d
-
-- stage: DeployToKubernetes
-  displayName: Deploy to Kubernetes
-  jobs:
-  - job: DeployToAKS
-    displayName: Deploy to Azure Kubernetes Service
-    steps:
-    - task: AzureCLI@2
-      displayName: Deploy to Kubernetes
-      inputs:
-        azureSubscription: $(azureSubscription)
-        scriptType: 'ps'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          # Login and set AKS context
-          az aks get-credentials -n $(AKS_CLUSTER_NAME) -g $(RESOURCE_GROUP)
-          
-          # Create Kubernetes secret for MongoDB URI
-          kubectl create secret generic mongo-secret \
-            --from-literal=MONGO_URI="$(MONGO_URI)" \
-            -o yaml --dry-run=client | kubectl apply -f -
-          
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/service.yaml
-          
-          # Update images
-          kubectl set image deployment/frontend-deployment \
-            frontend=$(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) \
-            -n your-namespace
-          
-          kubectl set image deployment/backend-deployment \
-            backend=$(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) \
-            -n your-namespace
-
-          # Verify deployments
-          kubectl get deployments -n your-namespace
-          kubectl get pods -n your-namespace
+          az webapp config container set `
+            --name $(APP_NAME) `
+            --resource-group $(RESOURCE_GROUP) `
+            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest `
+            --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
+            --docker-registry-server-user $(AZURE_ACR_USERNAME) `
+            --docker-registry-server-password $(AZURE_ACR_PASSWORD)
