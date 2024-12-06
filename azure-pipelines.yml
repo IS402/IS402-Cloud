@@ -5,7 +5,7 @@ trigger:
 
 variables:
   - name: azureSubscription
-    value: AzureForStudents-Wumiibo-Connection
+    value: '974ba5ab-9bc7-41c9-84ac-d53863572299'
   - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
   - name: ACR_NAME
     value: wumiibo
@@ -19,91 +19,109 @@ variables:
     value: wumiibo       # Production Azure Web App
   - name: RESOURCE_GROUP
     value: Wumiibo       # Single resource group for both environments
+  - name: AKS_CLUSTER_NAME
+    value: your-aks-cluster-name  # Replace with your actual AKS cluster name
+
+pool:
+  name: "Self-hosted 1"  # Use your self-hosted agent pool
 
 stages:
 - stage: BuildAndPush
   displayName: Build and Push Docker Images
-  pool:
-    name: "Self-hosted 1"  # Use your self-hosted agent pool
   jobs:
   - job: BuildAndPush
     displayName: Build and Push Docker Images to ACR
     steps:
-    - task: PowerShell@2
-      displayName: Login to Azure Container Registry
+    - task: AzureCLI@2
+      displayName: Azure Login and ACR Login
       inputs:
-        targetType: 'inline'
-        script: |
-          az login --scope https://management.core.windows.net//.default
+        azureSubscription: $(azureSubscription)
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az account show
           az acr login --name $(ACR_NAME)
-        pwsh: true
 
-    - task: PowerShell@2
+    - task: Docker@2
       displayName: Build and Push Frontend Image
       inputs:
-        targetType: 'inline'
-        script: |
-          docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) -f frontend/Dockerfile .
-          docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
-        pwsh: true
+        containerRegistry: $(ACR_NAME)
+        repository: $(FRONTEND_IMAGE)
+        command: 'buildAndPush'
+        Dockerfile: 'frontend/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
 
-    - task: PowerShell@2
+    - task: Docker@2
       displayName: Build and Push Backend Image
       inputs:
-        targetType: 'inline'
-        script: |
-          docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) -f backend/Dockerfile .
-          docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
-        pwsh: true
+        containerRegistry: $(ACR_NAME)
+        repository: $(BACKEND_IMAGE)
+        command: 'buildAndPush'
+        Dockerfile: 'backend/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
 
 - stage: DeployDev
   displayName: Deploy to Development Environment
-  pool:
-    name: "Self-hosted 1"
   jobs:
   - job: DeployDev
     displayName: Deploy Containers to Development
     steps:
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Deploy Development Containers
       inputs:
-        targetType: 'inline'
-        script: |
-          # Login to Azure Container Registry
+        azureSubscription: $(azureSubscription)
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Ensure ACR login
           az acr login --name $(ACR_NAME)
 
-          # Set environment variables
+          # Set environment variables securely
           $env:MONGO_URI = "$(MONGO_URI)"
 
-          # Deploy containers using docker-compose
-          docker-compose -f docker-compose.prod.yml up --build -d
-        pwsh: true
+          # Use docker-compose or alternative deployment method
+          docker-compose -f docker-compose.prod.yml down
+          docker-compose -f docker-compose.prod.yml up -d
 
 - stage: DeployToKubernetes
   displayName: Deploy to Kubernetes
-  pool:
-    name: "Self-hosted 1"
   jobs:
   - job: DeployToAKS
     displayName: Deploy to Azure Kubernetes Service
     steps:
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Deploy to Kubernetes
       inputs:
-        targetType: 'inline'
-        script: |
-          # Login to Azure 
-          az login
+        azureSubscription: $(azureSubscription)
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Login and set AKS context
+          az aks get-credentials -n $(AKS_CLUSTER_NAME) -g $(RESOURCE_GROUP)
           
-          # Set Kubernetes context
-          az aks get-credentials -n your-aks-cluster-name -g $(RESOURCE_GROUP)
+          # Create Kubernetes secret for MongoDB URI
+          kubectl create secret generic mongo-secret \
+            --from-literal=MONGO_URI="$(MONGO_URI)" \
+            -o yaml --dry-run=client | kubectl apply -f -
           
           # Apply Kubernetes manifests
+          kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
           
-          # Update image for frontend
-          kubectl set image deployment/frontend-deployment frontend=$(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId)
+          # Update images
+          kubectl set image deployment/frontend-deployment \
+            frontend=$(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):$(Build.BuildId) \
+            -n your-namespace
           
-          # Update image for backend
-          kubectl set image deployment/backend-deployment backend=$(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId)
-        pwsh: true
+          kubectl set image deployment/backend-deployment \
+            backend=$(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):$(Build.BuildId) \
+            -n your-namespace
+
+          # Verify deployments
+          kubectl get deployments -n your-namespace
+          kubectl get pods -n your-namespace
