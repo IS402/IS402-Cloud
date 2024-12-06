@@ -5,7 +5,7 @@ trigger:
 
 variables:
   - name: azureSubscription
-    value: '974ba5ab-9bc7-41c9-84ac-d53863572299'
+    value: 'c4223a0b-6719-4c48-a291-1c557fda900e'
   - group: SECRET_KEY  # Reference your variable group containing MONGO_URI and other secrets
   - name: ACR_NAME
     value: wumiibo
@@ -20,7 +20,7 @@ variables:
   - name: RESOURCE_GROUP
     value: Wumiibo       # Single resource group for both environments
   - name: AKS_CLUSTER_NAME
-    value: your-aks-cluster-name  # Replace with your actual AKS cluster name
+    value: wumiibo-aks  # Replace with your actual AKS cluster name
 
 pool:
   name: "Self-hosted 1"  # Use your self-hosted agent pool
