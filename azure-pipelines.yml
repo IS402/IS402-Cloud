@@ -28,7 +28,7 @@ stages:
     - task: AzureCLI@2
       displayName: Create Azure Container Registry
       inputs:
-        azureSubscription: AzureForStudents-Wumiibo-Connection # Service Connection name
+        azureSubscription: Azure for Students (c4223a0b-6719-4c48-a291-1c557fda900e) # Service Connection name
         scriptType: ps  # Use PowerShell
         scriptLocation: inlineScript
         inlineScript: |
