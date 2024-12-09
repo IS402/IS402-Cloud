@@ -4,91 +4,82 @@ trigger:
       - main  # Trigger pipeline on changes to the 'main' branch
 
 variables:
-  group: SECRET_KEY
-  # New Azure Container Registry Name
-  ACR_NAME: wumiibomain
-  
-  # Image names
-  FRONTEND_IMAGE: is402-frontend
-  BACKEND_IMAGE: is402-backend
-  MONGO_IMAGE: mongo
-  # Azure Web App and Resource Group
-  APP_NAME: wumiibo  # Azure Web App name
-  RESOURCE_GROUP: Wumiibo  # Resource group containing Azure Web App
+  # ACR Configuration
+  ACR_NAME: <your_acr_name>            # Replace with your Azure Container Registry name
+  ACR_LOGIN_SERVER: <your_acr_login_server>  # e.g., myacr.azurecr.io
+  ACR_USERNAME: <your_acr_admin_username>   # Replace with the ACR admin username
+  ACR_PASSWORD: <your_acr_admin_password>   # Replace with the ACR admin password
+
+  # Images
+  FRONTEND_IMAGE: frontend
+  BACKEND_IMAGE: backend
 
 stages:
-- stage: SetupACR
-  displayName: Create New Azure Container Registry
-  jobs:
-  - job: CreateACR
-    displayName: Create Azure Container Registry
-    pool:
-      name: Self-hosted 1
-    steps:
-    - task: AzureCLI@2
-      displayName: Create Azure Container Registry
-      inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299  # Service Connection to Azure
-        scriptType: ps
-        scriptLocation: inlineScript
-        inlineScript: |
-          az acr create `
-            --name $(ACR_NAME) `
-            --resource-group $(RESOURCE_GROUP) `
-            --sku Basic `
-            --admin-enabled true
-
 - stage: BuildAndPush
-  displayName: Build and Push Docker Images
-  dependsOn: SetupACR  # Ensure ACR is created before this stage
+  displayName: Build and Push Docker Images to ACR
   jobs:
   - job: BuildAndPush
-    displayName: Build and Push Docker Images to ACR
+    displayName: Build and Push Docker Images
     pool:
-      name: Self-hosted 1
+      name: Self-hosted 1  # Use the self-hosted agent pool
     steps:
-    - task: AzureCLI@2
-      displayName: Login to Azure Container Registry
-      inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
-        scriptType: ps
-        scriptLocation: inlineScript
-        inlineScript: |
-          az acr login --name $(ACR_NAME)
     - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest -f frontend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest
+        echo "Logging in to ACR..."
+        echo $(ACR_PASSWORD) | docker login $(ACR_LOGIN_SERVER) -u $(ACR_USERNAME) --password-stdin
+      displayName: Log in to ACR
+
+    - script: |
+        echo "Building and pushing frontend image..."
+        docker build -t $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest ./frontend
+        docker push $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest
       displayName: Build and Push Frontend Image
+
     - script: |
-        docker build -t $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest -f backend/Dockerfile .
-        docker push $(ACR_NAME).azurecr.io/$(BACKEND_IMAGE):latest
+        echo "Building and pushing backend image..."
+        docker build -t $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest ./backend
+        docker push $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest
       displayName: Build and Push Backend Image
-    - script: |
-        docker pull mongo:latest
-        docker tag mongo:latest $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
-        docker push $(ACR_NAME).azurecr.io/$(MONGO_IMAGE):latest
-      displayName: Push MongoDB Image
 
 - stage: Deploy
-  displayName: Deploy to Azure Web App
-  dependsOn: BuildAndPush  # Ensure images are pushed before this stage
+  displayName: Deploy to Azure App Service
+  dependsOn: BuildAndPush
   jobs:
   - job: Deploy
-    displayName: Deploy Containers to Azure Web App
+    displayName: Deploy Docker Compose to App Service
     pool:
       name: Self-hosted 1
     steps:
-    - task: AzureCLI@2
-      displayName: Deploy to Azure Web App
-      inputs:
-        azureSubscription: 974ba5ab-9bc7-41c9-84ac-d53863572299
-        scriptType: ps
-        scriptLocation: inlineScript
-        inlineScript: |
-          az webapp config container set `
-            --name $(APP_NAME) `
-            --resource-group $(RESOURCE_GROUP) `
-            --docker-custom-image-name $(ACR_NAME).azurecr.io/$(FRONTEND_IMAGE):latest `
-            --docker-registry-server-url https://$(ACR_NAME).azurecr.io `
-            --docker-registry-server-user $(AZURE_ACR_USERNAME) `
-            --docker-registry-server-password $(AZURE_ACR_PASSWORD)
+    - script: |
+        echo "Creating Docker Compose file for production deployment..."
+        echo "
+        version: '3.8'
+
+        services:
+          frontend:
+            image: $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest
+            ports:
+              - '3000:3000'
+            environment:
+              - NODE_OPTIONS=--openssl-legacy-provider
+              - CHOKIDAR_USEPOLLING=true
+
+          backend:
+            image: $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest
+            ports:
+              - '5000:5000'
+            env_file: ./backend/.env
+
+        networks:
+          is402:
+            driver: bridge
+        " > docker-compose.prod.yml
+      displayName: Generate Docker Compose File
+
+    - script: |
+        echo "Deploying containers to Azure App Service..."
+        az webapp config container set \
+          --name <your_app_service_name> \
+          --resource-group <your_resource_group_name> \
+          --multicontainer-config-type compose \
+          --multicontainer-config-file docker-compose.prod.yml
+      displayName: Deploy to Azure App Service
