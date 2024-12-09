@@ -1,20 +1,20 @@
 trigger:
   branches:
     include:
-      - main  # Pipeline sẽ chạy khi có thay đổi trên nhánh 'main'
+      - main  # Pipeline triggers on changes to the 'main' branch
 
 variables:
   # ACR Configuration
-  ACR_NAME: wumiibo3  # Tên ACR mới
-  RESOURCE_GROUP: Wmiibo  # Nhóm tài nguyên hiện tại
-  LOCATION: southeastasia  # Vị trí của ACR
-  SKU: Basic  # Gói ACR (Basic, Standard, Premium)
+  ACR_NAME: wumiibo3  # Name of the new Azure Container Registry
+  RESOURCE_GROUP: Wmiibo  # Current resource group
+  LOCATION: southeastasia  # Location of the ACR
+  SKU: Basic  # ACR SKU (Basic, Standard, Premium)
 
   # App Service Configuration
-  APP_NAME: wumiibo3  # Tên App Service
-  PLAN_NAME: wumiibo3-Plan  # Tên App Service Plan
-  IMAGE_NAME: your-image-name  # Tên Docker Image
-  IMAGE_TAG: latest  # Tag của Docker Image
+  APP_NAME: wumiibo3  # Name of the App Service
+  PLAN_NAME: wumiibo3-Plan  # Name of the App Service Plan
+  IMAGE_NAME: your-image-name  # Docker image name
+  IMAGE_TAG: latest  # Docker image tag
 
 stages:
 - stage: CreateACR
@@ -23,59 +23,59 @@ stages:
   - job: CreateACRJob
     displayName: Create ACR Job
     pool:
-      name: 'Self-hosted 1'  # Giữ Self-hosted pool
+      name: 'Self-hosted 1'  # Use self-hosted pool
     steps:
     - task: AzureCLI@2
       displayName: Create Azure Container Registry
       inputs:
-        azureSubscription: AzureForStudents-Wumiibo-Connection # Tên Service Connection
-        scriptType: bash
+        azureSubscription: AzureForStudents-Wumiibo-Connection # Service Connection name
+        scriptType: ps  # Use PowerShell
         scriptLocation: inlineScript
         inlineScript: |
-          echo "Creating ACR..."
-          az acr create \
-            --name $(ACR_NAME) \
-            --resource-group $(RESOURCE_GROUP) \
-            --sku $(SKU) \
-            --location $(LOCATION) \
+          Write-Host "Creating ACR..."
+          az acr create `
+            --name $(ACR_NAME) `
+            --resource-group $(RESOURCE_GROUP) `
+            --sku $(SKU) `
+            --location $(LOCATION) `
             --admin-enabled true
-          echo "ACR created successfully!"
+          Write-Host "ACR created successfully!"
 
 - stage: DeployToAppService
   displayName: Deploy to Azure App Service
-  dependsOn: CreateACR  # Đảm bảo ACR được tạo trước khi triển khai
+  dependsOn: CreateACR  # Ensure ACR is created before deployment
   jobs:
   - job: DeployJob
     displayName: Deploy Application to App Service
     pool:
-      name: 'Self-hosted 1'  # Giữ Self-hosted pool
+      name: 'Self-hosted 1'  # Use self-hosted pool
     steps:
     - task: AzureCLI@2
       displayName: Create App Service Plan
       inputs:
         azureSubscription: AzureForStudents-Wumiibo-Connection
-        scriptType: bash
+        scriptType: ps  # Use PowerShell
         scriptLocation: inlineScript
         inlineScript: |
-          echo "Creating App Service Plan..."
-          az appservice plan create \
-            --resource-group $(RESOURCE_GROUP) \
-            --name $(PLAN_NAME) \
-            --sku B1 \
+          Write-Host "Creating App Service Plan..."
+          az appservice plan create `
+            --resource-group $(RESOURCE_GROUP) `
+            --name $(PLAN_NAME) `
+            --sku B1 `
             --is-linux
-          echo "App Service Plan created successfully!"
+          Write-Host "App Service Plan created successfully!"
 
     - task: AzureCLI@2
       displayName: Deploy Application to App Service
       inputs:
         azureSubscription: AzureForStudents-Wumiibo-Connection
-        scriptType: bash
+        scriptType: ps  # Use PowerShell
         scriptLocation: inlineScript
         inlineScript: |
-          echo "Deploying App Service..."
-          az webapp create \
-            --resource-group $(RESOURCE_GROUP) \
-            --plan $(PLAN_NAME) \
-            --name $(APP_NAME) \
+          Write-Host "Deploying App Service..."
+          az webapp create `
+            --resource-group $(RESOURCE_GROUP) `
+            --plan $(PLAN_NAME) `
+            --name $(APP_NAME) `
             --deployment-container-image-name $(ACR_NAME).azurecr.io/$(IMAGE_NAME):$(IMAGE_TAG)
-          echo "App Service deployed successfully!"
+          Write-Host "App Service deployed successfully!"
