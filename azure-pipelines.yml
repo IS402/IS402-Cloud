@@ -1,89 +1,63 @@
 trigger:
   branches:
     include:
-      - main  # Trigger pipeline on changes to the 'main' branch
+      - main  # Pipeline sẽ chạy khi có thay đổi trên nhánh 'main'
 
 variables:
-  - group: SECRET_KEY  # Fetch variables from the Variable Group named "SECRET_KEY"
+  # ACR Configuration
+  ACR_NAME: wumiibo3  # Tên ACR mới
+  RESOURCE_GROUP: Wmiibo  # Nhóm tài nguyên hiện tại
+  LOCATION: southeastasia  # Vị trí của ACR
+  SKU: Basic  # Gói ACR (Basic, Standard, Premium)
 
-  - name: FRONTEND_IMAGE
-    value: is402-frontend
-  - name: BACKEND_IMAGE
-    value: is402-backend
-  - name: ACR_USERNAME
-    value: $(ACR_USERNAME)
-  - name: ACR_PASSWORD
-    value: $(ACR_PASSWORD)
-  
+  # App Service
+  APP_NAME: wumiibo3  # Tên App Service
 
 stages:
-- stage: BuildAndPush
-  displayName: Build and Push Docker Images to ACR
+- stage: CreateACR
+  displayName: Create Azure Container Registry
   jobs:
-  - job: BuildAndPush
-    displayName: Build and Push Docker Images
+  - job: CreateACRJob
+    displayName: Create ACR Job
     pool:
-      name: Self-hosted 1  # Use the self-hosted agent pool
+      name: 'Self-hosted 1'  # Sử dụng hosted agent
     steps:
-    - script: |
-        echo "Logging in to ACR..."
-        echo $(ACR_PASSWORD) | docker login $(ACR_LOGIN_SERVER) -u $(ACR_USERNAME) --password-stdin
-      displayName: Log in to ACR
+    - task: AzureCLI@2
+      displayName: Create Azure Container Registry
+      inputs:
+        azureSubscription: AzureForStudents-Wumiibo-Connection # Tên Service Connection
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Creating ACR..."
+          az acr create \
+            --name $(ACR_NAME) \
+            --resource-group $(RESOURCE_GROUP) \
+            --sku $(SKU) \
+            --location $(LOCATION) \
+            --admin-enabled true
+          echo "ACR created successfully!"
 
-    - script: |
-        echo "Building and pushing frontend image..."
-        docker build -t $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest ./frontend
-        docker push $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest
-      displayName: Build and Push Frontend Image
-
-    - script: |
-        echo "Building and pushing backend image..."
-        docker build -t $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest ./backend
-        docker push $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest
-      displayName: Build and Push Backend Image
-
-- stage: Deploy
+- stage: DeployToAppService
   displayName: Deploy to Azure App Service
-  dependsOn: BuildAndPush
+  dependsOn: CreateACR  # Đảm bảo ACR được tạo trước khi triển khai
   jobs:
-  - job: Deploy
-    displayName: Deploy Docker Compose to App Service
+  - job: DeployJob
+    displayName: Deploy Application to App Service
     pool:
-      name: Self-hosted 1
+      name: 'Self-hosted 1'
     steps:
-    - script: |
-        echo "Creating Docker Compose file for production deployment..."
-        echo "
-        version: '3.8'
-
-        services:
-          frontend:
-            image: $(ACR_LOGIN_SERVER)/$(FRONTEND_IMAGE):latest
-            ports:
-              - '3000:3000'
-            environment:
-              - NODE_OPTIONS=--openssl-legacy-provider
-              - CHOKIDAR_USEPOLLING=true
-
-          backend:
-            image: $(ACR_LOGIN_SERVER)/$(BACKEND_IMAGE):latest
-            ports:
-              - '5000:5000'
-            env_file: ./backend/.env
-            environment:
-              - MONGO_URI=${MONGO_URI}
-
-        networks:
-          is402:
-            driver: bridge
-        " > docker-compose.prod.yml
-      displayName: Generate Docker Compose File
-
-    - script: |
-        echo "Deploying containers to Azure App Service..."
-        az webapp config container set \
-          --name wumiiboshop \
-          --resource-group Wumiibo \
-          --multicontainer-config-type compose \
-          --multicontainer-config-file docker-compose.prod.yml
-      displayName: Deploy to Azure App Service
+    - task: AzureCLI@2
+      displayName: Deploy Application to App Service
+      inputs:
+        azureSubscription: AzureForStudents-Wumiibo-Connection
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Deploying App Service..."
+          az webapp create \
+            --resource-group $(RESOURCE_GROUP) \
+            --plan $(APP_NAME)-Plan \
+            --name $(APP_NAME) \
+            --deployment-container-image-name $(ACR_NAME).azurecr.io/your-image-name:latest
+          echo "App Service deployed successfully!"
