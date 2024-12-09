@@ -10,6 +10,11 @@ variables:
     value: is402-frontend
   - name: BACKEND_IMAGE
     value: is402-backend
+  - name: ACR_USERNAME
+    value: $(ACR_USERNAME)
+  - name: ACR_PASSWORD
+    value: $(ACR_PASSWORD)
+  
 
 stages:
 - stage: BuildAndPush
