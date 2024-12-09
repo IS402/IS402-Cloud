@@ -6,7 +6,7 @@ trigger:
 variables:
   # ACR Configuration
   ACR_NAME: wumiibo3  # Name of the new Azure Container Registry
-  RESOURCE_GROUP: Wmiibo  # Current resource group
+  RESOURCE_GROUP: Wumiibo  # Current resource group
   LOCATION: southeastasia  # Location of the ACR
   SKU: Basic  # ACR SKU (Basic, Standard, Premium)
 
