@@ -4,15 +4,12 @@ trigger:
       - main  # Trigger pipeline on changes to the 'main' branch
 
 variables:
-  # ACR Configuration
-  ACR_NAME: <your_acr_name>            # Replace with your Azure Container Registry name
-  ACR_LOGIN_SERVER: <your_acr_login_server>  # e.g., myacr.azurecr.io
-  ACR_USERNAME: <your_acr_admin_username>   # Replace with the ACR admin username
-  ACR_PASSWORD: <your_acr_admin_password>   # Replace with the ACR admin password
+  - group: SECRET_KEY  # Fetch variables from the Variable Group named "SECRET_KEY"
 
-  # Images
-  FRONTEND_IMAGE: frontend
-  BACKEND_IMAGE: backend
+  - name: FRONTEND_IMAGE
+    value: is402-frontend
+  - name: BACKEND_IMAGE
+    value: is402-backend
 
 stages:
 - stage: BuildAndPush
@@ -68,6 +65,8 @@ stages:
             ports:
               - '5000:5000'
             env_file: ./backend/.env
+            environment:
+              - MONGO_URI=${MONGO_URI}
 
         networks:
           is402:
@@ -78,8 +77,8 @@ stages:
     - script: |
         echo "Deploying containers to Azure App Service..."
         az webapp config container set \
-          --name <your_app_service_name> \
-          --resource-group <your_resource_group_name> \
+          --name wumiiboshop \
+          --resource-group Wumiibo \
           --multicontainer-config-type compose \
           --multicontainer-config-file docker-compose.prod.yml
       displayName: Deploy to Azure App Service
